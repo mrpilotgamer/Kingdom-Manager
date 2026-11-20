@@ -1,0 +1,506 @@
+{
+ "tables": {
+  "4-7": {
+   "title": "Event Type and Danger Level",
+   "rows": [
+    {
+     "min": 1,
+     "max": 2,
+     "event": "Natural blessing and roll again1"
+    },
+    {
+     "min": 3,
+     "max": 4,
+     "event": "Good weather and roll again1"
+    },
+    {
+     "min": 5,
+     "max": 25,
+     "event": "Beneficial kingdom event (Table 4–8)"
+    },
+    {
+     "min": 26,
+     "max": 50,
+     "event": "Dangerous kingdom event (Table 4–9)"
+    },
+    {
+     "min": 51,
+     "max": 75,
+     "event": "Beneficial settlement event (Table 4–10)"
+    },
+    {
+     "min": 76,
+     "max": 96,
+     "event": "Dangerous settlement event (Table 4–11)"
+    },
+    {
+     "min": 97,
+     "max": 97,
+     "event": "Bandit activity and roll again2"
+    },
+    {
+     "min": 98,
+     "max": 98,
+     "event": "Squatters and roll again2"
+    },
+    {
+     "min": 99,
+     "max": 99,
+     "event": "Monster attack and roll again2"
+    },
+    {
+     "min": 100,
+     "max": 100,
+     "event": "Vandals and roll again2"
+    }
+   ]
+  },
+  "4-8": {
+   "title": "Beneficial Kingdom Events",
+   "rows": [
+    {
+     "min": 1,
+     "max": 7,
+     "event": "Archaeological find"
+    },
+    {
+     "min": 8,
+     "max": 12,
+     "event": "Diplomatic overture"
+    },
+    {
+     "min": 13,
+     "max": 20,
+     "event": "Discovery"
+    },
+    {
+     "min": 21,
+     "max": 31,
+     "event": "Economic boom"
+    },
+    {
+     "min": 32,
+     "max": 39,
+     "event": "Festive invitation"
+    },
+    {
+     "min": 40,
+     "max": 53,
+     "event": "Food surplus"
+    },
+    {
+     "min": 54,
+     "max": 66,
+     "event": "Good weather"
+    },
+    {
+     "min": 67,
+     "max": 75,
+     "event": "Land rush"
+    },
+    {
+     "min": 76,
+     "max": 85,
+     "event": "Natural blessing"
+    },
+    {
+     "min": 86,
+     "max": 90,
+     "event": "New subjects"
+    },
+    {
+     "min": 91,
+     "max": 100,
+     "event": "Political calm"
+    }
+   ]
+  },
+  "4-9": {
+   "title": "Dangerous Kingdom Events",
+   "rows": [
+    {
+     "min": 1,
+     "max": 5,
+     "event": "Assassination attempt"
+    },
+    {
+     "min": 6,
+     "max": 18,
+     "event": "Bandit activity"
+    },
+    {
+     "min": 19,
+     "max": 28,
+     "event": "Feud"
+    },
+    {
+     "min": 29,
+     "max": 41,
+     "event": "Food shortage"
+    },
+    {
+     "min": 42,
+     "max": 51,
+     "event": "Improvement demand"
+    },
+    {
+     "min": 52,
+     "max": 59,
+     "event": "Inquisition"
+    },
+    {
+     "min": 60,
+     "max": 64,
+     "event": "Large disaster"
+    },
+    {
+     "min": 65,
+     "max": 76,
+     "event": "Monster attack"
+    },
+    {
+     "min": 77,
+     "max": 84,
+     "event": "Plague"
+    },
+    {
+     "min": 85,
+     "max": 92,
+     "event": "Public scandal"
+    },
+    {
+     "min": 93,
+     "max": 100,
+     "event": "Smugglers"
+    }
+   ]
+  },
+  "4-10": {
+   "title": "Beneficial Settlement Events",
+   "rows": [
+    {
+     "min": 1,
+     "max": 14,
+     "event": "Boomtown"
+    },
+    {
+     "min": 15,
+     "max": 26,
+     "event": "Discovery"
+    },
+    {
+     "min": 27,
+     "max": 40,
+     "event": "Justice prevails"
+    },
+    {
+     "min": 41,
+     "max": 46,
+     "event": "Noblesse oblige"
+    },
+    {
+     "min": 47,
+     "max": 58,
+     "event": "Outstanding success"
+    },
+    {
+     "min": 59,
+     "max": 66,
+     "event": "Pilgrimage"
+    },
+    {
+     "min": 67,
+     "max": 72,
+     "event": "Remarkable treasure"
+    },
+    {
+     "min": 73,
+     "max": 81,
+     "event": "Unexpected find"
+    },
+    {
+     "min": 82,
+     "max": 93,
+     "event": "Visiting celebrity"
+    },
+    {
+     "min": 94,
+     "max": 100,
+     "event": "Wealthy immigrant"
+    }
+   ]
+  },
+  "4-11": {
+   "title": "Dangerous Settlement Events",
+   "rows": [
+    {
+     "min": 1,
+     "max": 10,
+     "event": "Building demand"
+    },
+    {
+     "min": 11,
+     "max": 17,
+     "event": "Crop failure"
+    },
+    {
+     "min": 18,
+     "max": 25,
+     "event": "Cult activity"
+    },
+    {
+     "min": 26,
+     "max": 33,
+     "event": "Drug den"
+    },
+    {
+     "min": 34,
+     "max": 41,
+     "event": "Feud"
+    },
+    {
+     "min": 42,
+     "max": 49,
+     "event": "Inquisition"
+    },
+    {
+     "min": 50,
+     "max": 54,
+     "event": "Localized disaster"
+    },
+    {
+     "min": 55,
+     "max": 61,
+     "event": "Monster attack"
+    },
+    {
+     "min": 62,
+     "max": 66,
+     "event": "Plague"
+    },
+    {
+     "min": 67,
+     "max": 74,
+     "event": "Sensational crime"
+    },
+    {
+     "min": 75,
+     "max": 80,
+     "event": "Slavers"
+    },
+    {
+     "min": 81,
+     "max": 90,
+     "event": "Squatters"
+    },
+    {
+     "min": 91,
+     "max": 100,
+     "event": "Vandals"
+    }
+   ]
+  }
+ },
+ "events": {
+  "archaeological-find": {
+   "name": "Archaeological Find",
+   "tags": "",
+   "text": "A well-preserved ruin is found in your kingdom, with historical artifacts connected to the people who lived in your land long ago. Effect: Lore +1. If you have a Museum, the discoverers donate 10,000 gp worth of historical artifacts to its collection (if you have multiple Museums, choose one as the recipient)."
+  },
+  "assassination-attempt": {
+   "name": "Assassination Attempt",
+   "tags": "",
+   "text": "One of your leaders (determined randomly) is the target of an assassination attempt. If the target is a PC, the GM should run the attempt as an encounter, using an assassin of a CR equal to the targeted PC’s level. If the target is an NPC, you must succeed at a Stability check to prevent the assassination. If the assassination occurs, Unrest increases by 1d6 and the kingdom immediately incurs the penalties for not having a leader in that role."
+  },
+  "bandit-activity": {
+   "name": "Bandit Activity",
+   "tags": "",
+   "text": "Bandits are preying upon those who travel through your kingdom. Attempt a Stability check. If you succeed, your kingdom’s defenses stop the bandits before they cause any harm. If you fail, the bandits reduce your kingdom’s Treasury by 1d6 BP (each time you roll a 6, add the result to the total and roll again)."
+  },
+  "boomtown": {
+   "name": "Boomtown",
+   "tags": "Settlement",
+   "text": "Randomly select one settlement. Commerce booms among that settlement. Until the next Event phase, Economy increases by the number of buildings in the settlement that grant an Economy bonus, and Corruption increases by 1d4 in that settlement."
+  },
+  "building-demand": {
+   "name": "Building Demand",
+   "tags": "Settlement, Continuous",
+   "text": "The citizens demand a particular building be built (01–75) or demolished (76–100). Select the building type randomly from those available for the settlement. If the demand is not met by the next Event phase, Unrest increases by 1. Alternatively, you can suppress the citizens’ demands and negate the event by succeeding at a Loyalty check, but this reduces Loyalty by 2 and increases Unrest by 1."
+  },
+  "crop-failure": {
+   "name": "Crop Failure",
+   "tags": "Settlement",
+   "text": "Pests, blight, and weather ruin the harvest in the settlement’s hex and all adjacent hexes. Attempt two Stability checks. If both succeed, the problem is fixed before your kingdom takes any penalties from the event. If only one succeeds, affected farms reduce Consumption by 1 (instead of the normal reduction) in the next Upkeep phase. If neither succeeds, affected farms do not reduce Consumption at all in the next Upkeep phase."
+  },
+  "cult-activity": {
+   "name": "Cult Activity",
+   "tags": "Settlement, Continuous",
+   "text": "A religious cult of an alignment opposed to the kingdom’s alignment begins kidnapping, converting, or even publicly sacrificing citizens. Attempt a Loyalty check and a Stability check. If both succeed, the cult is disbanded before your kingdom takes any penalties from the event. For each of these checks you fail, Unrest increases by 1 and Productivity, Society, and Stability decrease by 1. If both checks fail, the event continues in the next Event phase."
+  },
+  "diplomatic-overture": {
+   "name": "Diplomatic Overture",
+   "tags": "",
+   "text": "A nearby kingdom sends an ambassador to you to negotiate an embassy (01–60), treaty (61–90), or alliance (91–100), as if using a diplomatic edict. If the GM doesn’t have an appropriate kingdom in mind when this event occurs, determine the kingdom’s alignment randomly; it may be hostile or friendly. The ambassador bears 1d4 BP worth of gifts for your kingdom."
+  },
+  "discovery": {
+   "name": "Discovery",
+   "tags": "Settlement",
+   "text": "Scholars unearth a bit of ancient lore or devise important new research of their own. Fame increases by 1 and Lore increases by 1d4."
+  },
+  "drug-den": {
+   "name": "Drug Den",
+   "tags": "Settlement, Continuous",
+   "text": "One of your Houses or Tenements becomes a hive of illicit drug trade. Attempt a Loyalty check and a Stability check, with a penalty equal to the number of Brothels, Tenements, Waterfronts, and lots with squatters in the settlement. If you succeed at both checks, you eliminate the drug den before your kingdom takes any penalties from the event. If you fail at one check, Crime and Unrest increase by 1. If you fail at both checks, Crime and Unrest increase by 1; Economy, Loyalty, and Stability decrease by 1; and on the next Event phase, a second drug den event occurs in the same settlement (01– 50) or the nearest settlement (51–100)."
+  },
+  "economic-boom": {
+   "name": "Economic Boom",
+   "tags": "",
+   "text": "Trade is booming in your kingdom! Your Treasury increases by 1d6 BP (each time you roll a 6, add the result to the total and roll again)."
+  },
+  "festive-invitation": {
+   "name": "Festive Invitation",
+   "tags": "",
+   "text": "Your kingdom’s leaders are invited to a festival in a neighboring kingdom. If you attend and bring 1d4 BP worth of gifts, for 1 year Society increases by 1, Fame increases by 1 for any check relating to that kingdom, and you gain a +2 bonus on edict checks relating to that kingdom."
+  },
+  "feud": {
+   "name": "Feud",
+   "tags": "Settlement, Continuous",
+   "text": "Nobles (or other influential rival groups) are bickering. Attempt a Loyalty check. If you succeed, you end the event but Unrest increases by 1. If you fail, Corruption increases by 1, Unrest increases by 1d6, and the event is continuous."
+  },
+  "food-shortage": {
+   "name": "Food Shortage",
+   "tags": "",
+   "text": "Spoilage, treachery, or bad luck has caused a food shortage this turn. Attempt a Stability check. If you succeed, Consumption in the next Upkeep phase increases by 50%. If you fail, Consumption in the next Upkeep phase increases by 100%."
+  },
+  "food-surplus": {
+   "name": "Food Surplus",
+   "tags": "",
+   "text": "Farmers produce an unexpected windfall! In the next Upkeep phase, the kingdom’s Consumption is halved (but returns to normal on the next turn)."
+  },
+  "good-weather": {
+   "name": "Good Weather",
+   "tags": "",
+   "text": "Good weather raises spirits and productivity. Economy, Loyalty, and Productivity increase by 2 until the next Event phase."
+  },
+  "improvement-demand": {
+   "name": "Improvement Demand",
+   "tags": "hex",
+   "text": "This event is identical to the building demand event, but the citizens want the construction or destruction of a terrain improvement in the hex."
+  },
+  "inquisition": {
+   "name": "Inquisition",
+   "tags": "settlement, continuous",
+   "text": "Zealots mobilize public opinion against a particular race, religion, kingdom, behavior, or kingdom leader. Attempt a Loyalty check. If you fail, the zealots run rampant; Infamy and Law increase by 1 and Lore, Loyalty, Productivity, and Stability decrease by 2. If you succeed, the zealots are somewhat suppressed; Lore, Loyalty, Productivity, and Stability decrease by 1. Two successful checks in a row end the event (if a check ends the event, no penalties from it occur that turn)."
+  },
+  "justice-prevails": {
+   "name": "Justice Prevails",
+   "tags": "settlement",
+   "text": "Authorities shut down a major criminal operation or thwart a plot against the settlement. Law and Loyalty increase by 1 and Crime and Unrest decreases by 1."
+  },
+  "land-rush": {
+   "name": "Land Rush",
+   "tags": "",
+   "text": "Overeager settlers claim an unclaimed hex and construct a Farm, Mine, Quarry, or Sawmill at their own expense, but are fighting over ownership. This hex is not part of your kingdom, so you gain no benefits from it. Productivity, Society, and Stability decrease by 1. Attempt a Loyalty check. If you succeed, Unrest increases by 1. If you fail, Unrest increases by 1d4. If you construct an identical improvement in an adjacent hex during your next Edict phase, remove this event’s changes to Productivity, Society, and Stability."
+  },
+  "large-disaster": {
+   "name": "Large Disaster",
+   "tags": "Hex",
+   "text": "A fire, storm, earthquake, flood, massive sabotage, or other disaster strikes! Roll 1d6; on a result of 1–5, the disaster threatens only 1 improved hex. On a result of 6, the disaster is widespread and threatens 1d6 additional improved hexes adjacent to the target hex. Attempt a Stability check for each threatened hex; failure means the disaster destroys one terrain improvement in the hex and Unrest increases by 1. (This Stability check represents your kingdom’s ability to prepare for or react to the disaster as well as the structure’s ability to withstand damage.)"
+  },
+  "localized-disaster": {
+   "name": "Localized Disaster",
+   "tags": "Settlement",
+   "text": "A fire, a flood, a storm, an earthquake, massive sabotage, or another disaster strikes the settlement! Roll 1d6 to determine how many lots are threatened by the disaster. On a result of 6, the disaster is widespread and affects 1d6 additional adjacent lots. Attempt a Stability check for each threatened lot; failure means the disaster destroys the building in that lot and Unrest increases by 1. (This Stability check represents your kingdom’s ability to prepare for or react to the disaster as well as the structure’s ability to withstand damage.)"
+  },
+  "monster-attack": {
+   "name": "Monster Attack",
+   "tags": "Settlement, Continuous",
+   "text": "A monster (or group of monsters) attacks the kingdom. The GM picks a claimed hex in the kingdom in which the monster is active. The CR of the monster encounter is equal to the party’s APL + 1d4 – 1. You can personally deal with the monster (earning XP and treasure normally for your efforts) or succeed at a Stability check to eliminate it (which doesn’t affect you or the kingdom’s statistics). If the monster is not defeated this turn, Unrest increases by 4. If the kingdom’s Unrest is 5 or higher, the monster’s hex becomes unclaimed—this is in addition to losing control of hexes in the Upkeep phase because of the kingdom’s high Unrest score."
+  },
+  "natural-blessing": {
+   "name": "Natural Blessing",
+   "tags": "",
+   "text": "A natural event, such as a bloom of rare and beautiful wildflowers or a good omen in the stars, raises your kingdom’s morale. You gain a +4 bonus on Stability checks until the next Event phase."
+  },
+  "new-subjects": {
+   "name": "New Subjects",
+   "tags": "",
+   "text": "A small group of indigenous intelligent creatures joins your kingdom and submits to your rule. Society and Stability increase by 1, Unrest decreases by 1, and your Treasury increases by 1d6 BP (each time you roll a 6, add the result to the total and roll again)."
+  },
+  "noblesse-oblige": {
+   "name": "Noblesse Oblige",
+   "tags": "Settlement",
+   "text": "A noble family offers to construct a Monument (01–50) or Park (51–100) in your settlement at the family’s own expense. The nobles pay all costs and Consumption for this purpose."
+  },
+  "outstanding-success": {
+   "name": "Outstanding Success",
+   "tags": "Settlement",
+   "text": "One of your kingdom’s citizens creates an artistic masterpiece, constructs a particularly impressive building, or otherwise brings glory to your kingdom. Fame increases by 1, your Treasury increases by 1d6 BP, and Unrest decreases by 2. You gain a +4 bonus on Economy checks until the next Event phase."
+  },
+  "pilgrimage": {
+   "name": "Pilgrimage",
+   "tags": "settlement",
+   "text": "Randomly select one settlement with a Cathedral, Shrine, or Temple. Pious religious folk journey to your settlement, holding a religious festival in that settlement at no BP cost to you."
+  },
+  "plague": {
+   "name": "Plague",
+   "tags": "Hex or Settlement, Continuous",
+   "text": "A deadly sickness strikes the target hex or settlement. You cannot construct terrain improvements or buildings there while plague persists. Attempt two Stability checks, each with a penalty equal to the number of Brothels, Foreign Quarters, Highways, Inns, Piers, Roads, Stables, Stockyards, Tenements, and Waterfronts in the hex, and a bonus equal to the number of Alchemists, Cathedrals, Herbalists, Hospitals, and Temples in the hex. If you succeed at both checks, the event ends, but Stability decreases by 2 and Treasury by 1d3 BP. If you fail at one check, Stability decreases by 4, Treasury decreases by 1d6 BP, and Unrest increases by 1d3. If you fail at both, Stability decreases by 4, Treasury decreases by 1d6 BP, Unrest increases by 1d6, and in the next Event phase the plague spreads to an adjacent hex."
+  },
+  "political-calm": {
+   "name": "Political Calm",
+   "tags": "",
+   "text": "A sudden absence of political machinations coincides with an increase in public approval. Unrest decreases by 1d6. Until the next Event phase, you gain a +2 bonus on checks to resolve continuous events. If your kingdom has no Unrest and no continuous events, both Loyalty and Stability increase by 1. If you are using Law settlement modifiers for the kingdom (see Expanding Settlement Modifiers), this also increases Law by 1 for the entire kingdom."
+  },
+  "public-scandal": {
+   "name": "Public Scandal",
+   "tags": "",
+   "text": "One of your leaders is implicated in a crime or an embarrassing situation, such as an affair with another leader’s spouse. Infamy increases by 1. Attempt a Loyalty check. If you fail, Unrest increases by 2 and you take a –4 penalty on all Loyalty checks until the next Event phase."
+  },
+  "remarkable-treasure": {
+   "name": "Remarkable Treasure",
+   "tags": "Settlement",
+   "text": "The settlement immediately fills one of its open magic item slots (selected randomly) with a better than normal item (medium if a minor slot, major if a medium slot). Treat the settlement’s base value as 50% higher than normal for determining the item’s maximum price. If the settlement doesn’t have any open magic item slots, treat this event as Unexpected Find."
+  },
+  "sensational-crime": {
+   "name": "Sensational Crime",
+   "tags": "Settlement, Continuous",
+   "text": "A serial killer, arsonist, or daring bandit plagues your kingdom. Attempt two Stability checks, adding the settlement’s Law and subtracting its Crime. If you succeed at both checks, the criminal is caught before your kingdom takes any penalties from the event. If you fail at one, the criminal escapes, Unrest increases by 1, and the event is continuous. If you fail at both, the criminal makes a fool of the authorities; Law and Loyalty decrease by 1, Treasury decreases by 1d4 BP, Unrest increases by 2, and the event is continuous."
+  },
+  "slavers": {
+   "name": "Slavers",
+   "tags": "Settlement, Continuous",
+   "text": "Criminals begin kidnapping citizens and selling them into slavery. Attempt a Loyalty check and a Stability check, each with a penalty equal to the number of Brothels, Tenements, Waterfronts, and lots with squatters in the settlement. If you succeed at both checks, the slavers are caught before your kingdom takes any penalties from the event. If you fail at one of the checks, Loyalty, Stability, and Unrest decrease by 1, but the event is not continuous. If you fail at both checks, Loyalty, Stability, and Unrest decrease by 2, and the event is continuous."
+  },
+  "smugglers": {
+   "name": "Smugglers",
+   "tags": "Continuous",
+   "text": "Unscrupulous merchants are subverting legitimate businesses. Attempt a Loyalty check and a Stability check, each with a penalty equal to the number of Piers, Waterfronts, and trade routes in the kingdom. If you succeed at both checks, the smugglers are stopped before your kingdom takes any penalties from the event. If you fail at one of the checks, Corruption increases by 1d2 in each settlement, Crime increases by 1 for the kingdom, Productivity for the kingdom decreases by 1d3, Treasury decreases by 1d3 BP, and the event is not continuous. If you fail at both of the checks, Corruption increases by 1d4, Crime for the kingdom increases by 1, Productivity for the kingdom decreases by 1d6, Treasury decreases by 1d6 BP, and the event is continuous."
+  },
+  "squatters": {
+   "name": "Squatters",
+   "tags": "Settlement, Continuous",
+   "text": "An empty settlement lot is taken over by beggars, troublemakers, and people unable to find adequate work or housing; they camp there with tents, wagons, and shanties. You cannot use the lot for anything until the squatters are dispersed. Fame and Stability decrease by 1, and Unrest increases by 2. You may try to disperse the squatters with a Stability check. Success means the squatters are dispersed and the event is not continuous, but if a House or Tenement is not built in that lot on the next turn, Infamy increases by 1 and Unrest by 2. Failing the Stability check means the event is continuous, and you may not build on that lot until the event is resolved."
+  },
+  "unexpected-find": {
+   "name": "Unexpected Find",
+   "tags": "Settlement",
+   "text": "Local citizens discover a forgotten magical item. The settlement gains one temporary minor (01–70) or medium (71–100) magic item slot that is automatically filled in the next Upkeep phase. This slot and the item go away if the item is purchased or in the next Event phase, whichever comes first."
+  },
+  "vandals": {
+   "name": "Vandals",
+   "tags": "Settlement",
+   "text": "Thugs and dissidents riot and destroy property. Attempt a Loyalty check and a Stability check. If you succeed at both, the vandals are stopped before your kingdom takes any penalties. If you fail at one check, Society decreases by 1 and one random building in the settlement is damaged. If you fail at both, one random building is destroyed (Unrest increases by 1 for each lot of the destroyed building), and 1d3 other random buildings are damaged. A damaged building provides no benefits until half its cost is spent repairing it."
+  },
+  "visiting-celebrity": {
+   "name": "Visiting Celebrity",
+   "tags": "Settlement",
+   "text": "A celebrity from another kingdom visits one of your settlements, causing a sudden influx of other visitors and spending. Fame increases by 1 and Treasury increases by 1d6 BP (each time you roll a 6, add the result to the total and roll again)."
+  },
+  "wealthy-immigrant": {
+   "name": "Wealthy Immigrant",
+   "tags": "Settlement",
+   "text": "A rich merchant or a noble from another land is impressed with your kingdom and asks to construct a Mansion (01–75) or Noble Villa (76–100) in the settlement at no cost to you. If you allow it, the building provides its normal benefits to your kingdom."
+  }
+ }
+}

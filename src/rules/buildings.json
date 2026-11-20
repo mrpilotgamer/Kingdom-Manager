@@ -1,0 +1,943 @@
+[
+ {
+  "id": "academy",
+  "name": "Academy",
+  "cost": 52,
+  "lots": 2,
+  "economy": 2,
+  "loyalty": 2,
+  "discounts": [
+   "casters-tower",
+   "library",
+   "magic-shop"
+  ],
+  "upgradeTo": [
+   "university"
+  ],
+  "upgradeFrom": [
+   "library"
+  ],
+  "magicItems": "3 minor scrolls or wondrous items, 2 medium scrolls or wondrous items",
+  "settlementText": "Lore +2, Productivity +1, Society +2; increase Lore bonus by 2 for questions relating to one Knowledge or Profession skill",
+  "description": "An institution of higher learning."
+ },
+ {
+  "id": "alchemist",
+  "name": "Alchemist",
+  "cost": 18,
+  "lots": 1,
+  "economy": 1,
+  "limitText": "Adjacent to 1 House",
+  "specialText": "Base value +1,000 gp",
+  "magicItems": "1 minor potion or wondrous item",
+  "baseValue": 1000,
+  "description": "The laboratory and home of a crafter of poisons, potions, or alchemical items."
+ },
+ {
+  "id": "arena",
+  "name": "Arena",
+  "cost": 40,
+  "lots": 4,
+  "stability": 4,
+  "fame": 1,
+  "discounts": [
+   "brothel",
+   "garrison",
+   "inn",
+   "stable",
+   "theater"
+  ],
+  "upgradeFrom": [
+   "theater"
+  ],
+  "limitText": "1 per settlement",
+  "settlementText": "Crime +1",
+  "description": "A large public structure for competitions and team sports."
+ },
+ {
+  "id": "bank",
+  "name": "Bank",
+  "cost": 28,
+  "lots": 1,
+  "economy": 4,
+  "specialText": "Base value +2,000 gp",
+  "baseValue": 2000,
+  "description": "A secure building for storing valuables and granting loans."
+ },
+ {
+  "id": "bardic-college",
+  "name": "Bardic College",
+  "cost": 40,
+  "lots": 2,
+  "economy": 1,
+  "loyalty": 3,
+  "stability": 1,
+  "fame": 1,
+  "discounts": [
+   "library",
+   "museum",
+   "theater"
+  ],
+  "magicItems": "2 minor scrolls or wondrous items",
+  "description": "A center for artistic learning. Education in a Bardic College also includes research into a wide-range of historical topics."
+ },
+ {
+  "id": "barracks",
+  "name": "Barracks",
+  "cost": 6,
+  "lots": 1,
+  "unrest": -1,
+  "upgradeTo": [
+   "garrison"
+  ],
+  "specialText": "Defense +2",
+  "settlementText": "Law +1",
+  "defense": 2,
+  "description": "A building to house conscripts, guards, militia, soldiers, or similar military forces."
+ },
+ {
+  "id": "black-market",
+  "name": "Black Market",
+  "cost": 50,
+  "lots": 1,
+  "economy": 2,
+  "stability": 1,
+  "unrest": 1,
+  "discounts": [
+   "brothel"
+  ],
+  "limitText": "Adjacent to 2 Houses",
+  "specialText": "Base value +2,000 gp",
+  "magicItems": "2 minor items, 1 medium item, 1 major item",
+  "settlementText": "Corruption +2, Crime +2",
+  "baseValue": 2000,
+  "description": "A number of shops with secret and usually illegal wares."
+ },
+ {
+  "id": "brewery",
+  "name": "Brewery",
+  "cost": 6,
+  "lots": 1,
+  "loyalty": 1,
+  "stability": 1,
+  "description": "A building for beer brewing, winemaking, or some similar use."
+ },
+ {
+  "id": "bridge",
+  "name": "Bridge",
+  "cost": 6,
+  "lots": 1,
+  "economy": 1,
+  "specialText": "Shares the space with a river or Waterway lot",
+  "description": "Allows travel across a river or Waterway, easing transportation."
+ },
+ {
+  "id": "bureau",
+  "name": "Bureau",
+  "cost": 10,
+  "lots": 2,
+  "economy": 1,
+  "loyalty": -1,
+  "stability": 1,
+  "settlementText": "Corruption +1, Law +1",
+  "description": "A large warren of offices for clerks and record-keepers working for a guild or government."
+ },
+ {
+  "id": "casters-tower",
+  "name": "Caster's Tower",
+  "cost": 30,
+  "lots": 1,
+  "economy": 1,
+  "loyalty": 1,
+  "magicItems": "3 minor items, 2 medium items",
+  "description": "The home and laboratory for a spellcaster."
+ },
+ {
+  "id": "castle",
+  "name": "Castle",
+  "cost": 54,
+  "lots": 4,
+  "economy": 2,
+  "loyalty": 2,
+  "stability": 2,
+  "unrest": -4,
+  "fame": 1,
+  "discounts": [
+   "noble-villa",
+   "town-hall"
+  ],
+  "limitText": "1 per settlement",
+  "specialText": "Defense +8",
+  "defense": 8,
+  "description": "The home of the settlement's leader or the heart of its defenses."
+ },
+ {
+  "id": "cathedral",
+  "name": "Cathedral",
+  "cost": 58,
+  "lots": 4,
+  "loyalty": 4,
+  "stability": 4,
+  "unrest": -4,
+  "fame": 1,
+  "discounts": [
+   "academy",
+   "temple"
+  ],
+  "limitText": "1 per settlement",
+  "specialText": "Halves Consumption increase for Promotion edicts",
+  "magicItems": "3 minor potions or wondrous items, 2 medium potions or wondrous items",
+  "settlementText": "Law +2",
+  "description": "The focal point of the settlement's spiritual leadership."
+ },
+ {
+  "id": "cistern",
+  "name": "Cistern",
+  "cost": 6,
+  "lots": 1,
+  "stability": 1,
+  "limitText": "Cannot be adjacent to a Dump, Graveyard, Stable, Stockyard, or Tannery",
+  "specialText": "Can share lot with another building Contains a safe supply of fresh water for the settlement."
+ },
+ {
+  "id": "city-wall",
+  "name": "City Wall",
+  "cost": 2,
+  "lots": 0,
+  "unrest": -2,
+  "unrestOncePerSettlement": true,
+  "limitText": "Land district border",
+  "specialText": "Defense +1",
+  "defense": 1,
+  "description": "A fortification of one side of a district with a sturdy wall. The GM may allow for cliffs and other natural features to function as a City Wall for one or more sides of a district. You may construct gates through your own city wall at no cost."
+ },
+ {
+  "id": "dance-hall",
+  "name": "Dance Hall",
+  "cost": 4,
+  "lots": 1,
+  "economy": 1,
+  "loyalty": 2,
+  "unrest": 1,
+  "limitText": "Adjacent to 1 House",
+  "settlementText": "Corruption +1, Crime +1",
+  "description": "An establishment for dancing, drinking, carousing, and holding celebrations."
+ },
+ {
+  "id": "dump",
+  "name": "Dump",
+  "cost": 4,
+  "lots": 1,
+  "stability": 1,
+  "limitText": "Cannot be adjacent to House, Mansion, or Noble Villa",
+  "description": "A centralized place to dispose of refuse."
+ },
+ {
+  "id": "everflowing-spring",
+  "name": "Everflowing Spring",
+  "cost": 5,
+  "lots": 0,
+  "limitText": "Settlement must have a building that can create medium magic items",
+  "specialText": "Can share lot with Castle, Cathedral, Market, Monument, Park, or Town Hall",
+  "description": "A fountain built around several decanters of endless water that provides an inexhaustible supply of fresh water."
+ },
+ {
+  "id": "exotic-artisan",
+  "name": "Exotic Artisan",
+  "cost": 10,
+  "lots": 1,
+  "economy": 1,
+  "stability": 1,
+  "limitText": "Adjacent to 1 House",
+  "magicItems": "1 minor ring, wand, or wondrous item",
+  "description": "The shop and home of a jeweler, tinker, glassblower, or the like."
+ },
+ {
+  "id": "foreign-quarter",
+  "name": "Foreign Quarter",
+  "cost": 30,
+  "lots": 4,
+  "economy": 3,
+  "stability": -1,
+  "specialText": "Increase the value of trade routes (see Trade Edicts by 5% (maximum 100%)",
+  "settlementText": "Crime +1, Lore +1, Society +2",
+  "description": "An area with many foreigners, as well as shops and services catering to them."
+ },
+ {
+  "id": "foundry",
+  "name": "Foundry",
+  "cost": 16,
+  "lots": 2,
+  "economy": 1,
+  "stability": 1,
+  "unrest": 1,
+  "discounts": [
+   "smithy"
+  ],
+  "limitText": "Adjacent to water district border",
+  "specialText": "Increase the Economy and BP earned per turn by 1 for 1 Mine connected to this settlement by a river or Road",
+  "settlementText": "Productivity +1",
+  "description": "Processes ore and refines it into finished metal."
+ },
+ {
+  "id": "garrison",
+  "name": "Garrison",
+  "cost": 28,
+  "lots": 2,
+  "loyalty": 2,
+  "stability": 2,
+  "unrest": -2,
+  "discounts": [
+   "city-wall",
+   "granary",
+   "jail"
+  ],
+  "upgradeFrom": [
+   "barracks"
+  ],
+  "description": "A large building to house armies, train guards, and recruit militia."
+ },
+ {
+  "id": "granary",
+  "name": "Granary",
+  "cost": 12,
+  "lots": 1,
+  "loyalty": 1,
+  "stability": 1,
+  "specialText": "If Farms reduce Consumption below 0, store up to 5 BP of excess production for use on a later turn when Consumption exceeds the Treasury",
+  "description": "A place to store grain and food."
+ },
+ {
+  "id": "graveyard",
+  "name": "Graveyard",
+  "cost": 4,
+  "lots": 1,
+  "loyalty": 1,
+  "description": "A plot of land to honor and bury the dead."
+ },
+ {
+  "id": "guildhall",
+  "name": "Guildhall",
+  "cost": 34,
+  "lots": 2,
+  "economy": 2,
+  "loyalty": 2,
+  "discounts": [
+   "pier",
+   "stable",
+   "trade-shop"
+  ],
+  "upgradeFrom": [
+   "trade-shop"
+  ],
+  "specialText": "Base value +1,000 gp",
+  "settlementText": "Law +1, Productivity +2",
+  "baseValue": 1000,
+  "description": "The headquarters for a guild or similar organization."
+ },
+ {
+  "id": "herbalist",
+  "name": "Herbalist",
+  "cost": 10,
+  "lots": 1,
+  "loyalty": 1,
+  "stability": 1,
+  "limitText": "Adjacent to 1 House",
+  "magicItems": "1 minor potion or wondrous item",
+  "description": "The workshop and home of a gardener, healer, or poisoner."
+ },
+ {
+  "id": "hospital",
+  "name": "Hospital",
+  "cost": 30,
+  "lots": 2,
+  "loyalty": 1,
+  "stability": 2,
+  "specialText": "Increase Stability by 2 during plague events",
+  "settlementText": "Lore +1, Productivity +2",
+  "description": "A building devoted to healing the sick."
+ },
+ {
+  "id": "house",
+  "name": "House",
+  "cost": 3,
+  "lots": 1,
+  "unrest": -1,
+  "upgradeFrom": [
+   "tenement"
+  ],
+  "specialText": "The first House you build during the Improvement phase does not count against the total number of buildings you can build during the phase",
+  "description": "A number of mid-sized houses for citizens."
+ },
+ {
+  "id": "inn",
+  "name": "Inn",
+  "cost": 10,
+  "lots": 1,
+  "economy": 1,
+  "loyalty": 1,
+  "limitText": "Adjacent to 1 House",
+  "specialText": "Base value +500 gp",
+  "settlementText": "Society +1",
+  "baseValue": 500,
+  "description": "A place for visitors to rest."
+ },
+ {
+  "id": "jail",
+  "name": "Jail",
+  "cost": 14,
+  "lots": 1,
+  "loyalty": 2,
+  "stability": 2,
+  "unrest": -2,
+  "settlementText": "Crime –1, Law +1",
+  "description": "A fortified structure for confining criminals or dangerous monsters."
+ },
+ {
+  "id": "library",
+  "name": "Library",
+  "cost": 6,
+  "lots": 1,
+  "economy": 1,
+  "loyalty": 1,
+  "upgradeTo": [
+   "academy"
+  ],
+  "settlementText": "Lore +1",
+  "description": "A large building containing an archive of books."
+ },
+ {
+  "id": "luxury-store",
+  "name": "Luxury Store",
+  "cost": 28,
+  "lots": 1,
+  "economy": 1,
+  "upgradeTo": [
+   "magic-shop-upgrade-from-shop"
+  ],
+  "limitText": "Adjacent to 1 House",
+  "specialText": "Base value +2,000 gp",
+  "magicItems": "2 minor rings, wands, or wondrous items",
+  "baseValue": 2000,
+  "description": "A shop that specializes in expensive comforts for the wealthy."
+ },
+ {
+  "id": "magic-shop",
+  "name": "Magic Shop",
+  "cost": 68,
+  "lots": 1,
+  "economy": 1,
+  "upgradeFrom": [
+   "luxury-store"
+  ],
+  "limitText": "Adjacent to 2 Houses",
+  "specialText": "Base value +2,000 gp",
+  "magicItems": "4 minor wondrous items, 2 medium wondrous items, 1 major wondrous item",
+  "baseValue": 2000,
+  "description": "A shop that specializes in magic items and spells."
+ },
+ {
+  "id": "magical-academy",
+  "name": "Magical Academy",
+  "cost": 58,
+  "lots": 2,
+  "economy": 2,
+  "fame": 1,
+  "discounts": [
+   "casters-tower",
+   "library",
+   "magic-shop"
+  ],
+  "magicItems": "3 minor potions, scrolls, or wondrous items; 1 medium potion, scroll, or wondrous item",
+  "settlementText": "Lore +2, Society +1; increase Lore bonus by 2 for questions relating to Knowledge (arcana)",
+  "description": "An institution for training students in spellcasting, magic item crafting, and various arcane arts."
+ },
+ {
+  "id": "magical-streetlamps",
+  "name": "Magical Streetlamps",
+  "cost": 5,
+  "lots": 0,
+  "limitText": "Settlement must have a Cathedral, Magic Shop, Magical Academy, or Temple",
+  "specialText": "Can share a lot with any building or improvement",
+  "settlementText": "Crime –1",
+  "description": "Continual flame lamps that illuminate the lot."
+ },
+ {
+  "id": "mansion",
+  "name": "Mansion",
+  "cost": 10,
+  "lots": 1,
+  "stability": 1,
+  "upgradeTo": [
+   "noble-villa"
+  ],
+  "settlementText": "Law +1, Society +1",
+  "description": "A single huge manor housing a rich family and its servants."
+ },
+ {
+  "id": "market",
+  "name": "Market",
+  "cost": 48,
+  "lots": 2,
+  "economy": 2,
+  "stability": 2,
+  "discounts": [
+   "black-market",
+   "inn",
+   "shop"
+  ],
+  "upgradeFrom": [
+   "shop"
+  ],
+  "limitText": "Adjacent to 2 Houses",
+  "specialText": "Base value +2,000 gp",
+  "magicItems": "2 minor wondrous items",
+  "baseValue": 2000,
+  "description": "An open area for traveling merchants and bargain hunters."
+ },
+ {
+  "id": "menagerie",
+  "name": "Menagerie",
+  "cost": 16,
+  "lots": 4,
+  "economy": 1,
+  "fame": 1,
+  "specialText": "Increase Loyalty by 1/4 the CR of the highest-CR creature in the Menagerie",
+  "description": "A large park stocked with exotic creatures for public viewing."
+ },
+ {
+  "id": "military-academy",
+  "name": "Military Academy",
+  "cost": 36,
+  "lots": 2,
+  "loyalty": 2,
+  "stability": 1,
+  "fame": 1,
+  "discounts": [
+   "barracks"
+  ],
+  "limitText": "1 per settlement",
+  "specialText": "Armies and commanders recruited at the settlement gain one bonus tactic (see Army Tactics)",
+  "magicItems": "1 minor armor, shield, or weapon; 1 medium armor, shield, or weapon",
+  "settlementText": "Law +1, Lore +1",
+  "description": "An institution dedicated to the study of war and the training of elite soldiers and officers."
+ },
+ {
+  "id": "mill",
+  "name": "Mill",
+  "cost": 6,
+  "lots": 1,
+  "economy": 1,
+  "stability": 1,
+  "limitText": "Adjacent to water district border",
+  "specialText": "With GM approval, you can construct a windmill at the same cost without the water district border requirement",
+  "settlementText": "Productivity +1",
+  "description": "A building used to cut lumber or grind grain."
+ },
+ {
+  "id": "mint",
+  "name": "Mint",
+  "cost": 30,
+  "lots": 1,
+  "economy": 3,
+  "loyalty": 3,
+  "stability": 1,
+  "fame": 1,
+  "description": "A secure building where the kingdom's coinage is minted and standard weights and measures are kept."
+ },
+ {
+  "id": "moat",
+  "name": "Moat",
+  "cost": 2,
+  "lots": 0,
+  "unrest": -1,
+  "unrestOncePerSettlement": true,
+  "limitText": "Land district border",
+  "specialText": "Defense +1; cannot be damaged by siege engines",
+  "defense": 1,
+  "description": "A fortification of one side of a district with an open or water-filled ditch, often backed by a low dike or embankment. The GM may allow a river or similar natural feature to function as a moat for one or more sides of a district."
+ },
+ {
+  "id": "monastery",
+  "name": "Monastery",
+  "cost": 16,
+  "lots": 2,
+  "stability": 1,
+  "settlementText": "Law +1, Lore +1",
+  "description": "A cloister for meditation, study, and the pursuit of various other scholarly paths."
+ },
+ {
+  "id": "monument",
+  "name": "Monument",
+  "cost": 6,
+  "lots": 1,
+  "loyalty": 1,
+  "unrest": -1,
+  "description": "A local memorial such as a bell tower, a statue of a settlement founder, a large tomb, or a public display of art."
+ },
+ {
+  "id": "museum",
+  "name": "Museum",
+  "cost": 30,
+  "lots": 2,
+  "economy": 1,
+  "loyalty": 1,
+  "fame": 1,
+  "settlementText": "Lore +2, Society +1; increase Lore bonus by 2 for questions relating to Knowledge (history); apply Lore bonus on Appraise checks regarding art objects",
+  "description": "A place to display art and artifacts both modern and historical. The GM may allow the kingdom leaders to display a valuable item (such as a magic item or bejeweled statue) in the museum, increasing Fame during this display by 1 for every 10,000 gp of the item's price (maximum +5 Fame), and by an additional 1 if the item is significant to the kingdom's history."
+ },
+ {
+  "id": "noble-villa",
+  "name": "Noble Villa",
+  "cost": 24,
+  "lots": 2,
+  "economy": 1,
+  "loyalty": 1,
+  "stability": 1,
+  "fame": 1,
+  "discounts": [
+   "exotic-artisan",
+   "luxury-store",
+   "mansion"
+  ],
+  "upgradeFrom": [
+   "mansion"
+  ],
+  "settlementText": "Society +1",
+  "description": "A sprawling manor with luxurious grounds that houses a noble's family and staff."
+ },
+ {
+  "id": "observatory",
+  "name": "Observatory",
+  "cost": 12,
+  "lots": 1,
+  "stability": 1,
+  "magicItems": "1 minor scroll or wondrous item",
+  "settlementText": "Lore +2",
+  "description": "A dome or tower with optical devices for viewing the heavens."
+ },
+ {
+  "id": "orphanage",
+  "name": "Orphanage",
+  "cost": 6,
+  "lots": 1,
+  "stability": 1,
+  "unrest": -1,
+  "description": "A place for housing and taking care of large numbers of orphans."
+ },
+ {
+  "id": "palace",
+  "name": "Palace",
+  "cost": 108,
+  "lots": 4,
+  "economy": 2,
+  "loyalty": 6,
+  "stability": 2,
+  "fame": 1,
+  "discounts": [
+   "mansion",
+   "mint",
+   "noble-villa"
+  ],
+  "specialText": "Base value +1,000 gp; you may make two special edicts per turn, but take a –2 penalty on kingdom checks associated with each special edict",
+  "settlementText": "Law +2",
+  "baseValue": 1000,
+  "description": "A grand edifice and walled grounds demonstrating one's wealth, power, and authority to the world."
+ },
+ {
+  "id": "park",
+  "name": "Park",
+  "cost": 4,
+  "lots": 1,
+  "loyalty": 1,
+  "unrest": -1,
+  "description": "A plot of land set aside for its serene beauty."
+ },
+ {
+  "id": "paved-streets",
+  "name": "Paved Streets",
+  "cost": 24,
+  "lots": 0,
+  "economy": 2,
+  "stability": 1,
+  "limitText": "1 per district",
+  "settlementText": "Productivity +2",
+  "description": "Brick or stone pavement that speeds transportation."
+ },
+ {
+  "id": "pier",
+  "name": "Pier",
+  "cost": 16,
+  "lots": 1,
+  "economy": 1,
+  "stability": 1,
+  "upgradeTo": [
+   "waterfront"
+  ],
+  "limitText": "Adjacent to water district border",
+  "specialText": "Base value +1,000 gp",
+  "settlementText": "Crime +1",
+  "baseValue": 1000,
+  "description": "Warehouses and workshops for docking ships and handling cargo and passengers."
+ },
+ {
+  "id": "sewer-system",
+  "name": "Sewer System",
+  "cost": 24,
+  "lots": 0,
+  "loyalty": 1,
+  "stability": 2,
+  "discounts": [
+   "cistern",
+   "dump"
+  ],
+  "limitText": "1 per district",
+  "settlementText": "Crime +1, Productivity +1",
+  "description": "An underground sanitation system that keeps the settlement clean, though it may become home to criminals and monsters."
+ },
+ {
+  "id": "shop",
+  "name": "Shop",
+  "cost": 8,
+  "lots": 1,
+  "economy": 1,
+  "upgradeTo": [
+   "luxury-store",
+   "market"
+  ],
+  "limitText": "Adjacent to 1 House or Mansion",
+  "specialText": "Base value +500 gp",
+  "settlementText": "Productivity +1",
+  "baseValue": 500,
+  "description": "A general store."
+ },
+ {
+  "id": "shrine",
+  "name": "Shrine",
+  "cost": 8,
+  "lots": 1,
+  "loyalty": 1,
+  "unrest": -1,
+  "upgradeTo": [
+   "temple"
+  ],
+  "magicItems": "1 minor potion, scroll, or wondrous item",
+  "description": "A shrine, idol, sacred grove, or similar holy site designed for worship by pious individuals."
+ },
+ {
+  "id": "smithy",
+  "name": "Smithy",
+  "cost": 6,
+  "lots": 1,
+  "economy": 1,
+  "stability": 1,
+  "description": "The workshop of an armorsmith, blacksmith, weaponsmith, or other craftsman who works with metal."
+ },
+ {
+  "id": "stable",
+  "name": "Stable",
+  "cost": 10,
+  "lots": 1,
+  "economy": 1,
+  "loyalty": 1,
+  "limitText": "Adjacent to 1 House, Mansion, or Noble Villa",
+  "specialText": "Base value +500 gp",
+  "baseValue": 500,
+  "description": "A structure for housing or selling horses and other mounts."
+ },
+ {
+  "id": "stockyard",
+  "name": "Stockyard",
+  "cost": 20,
+  "lots": 4,
+  "economy": 1,
+  "stability": -1,
+  "discounts": [
+   "stable",
+   "tannery"
+  ],
+  "specialText": "Farms in this hex or adjacent hexes reduce Consumption by 3 instead of 2",
+  "settlementText": "Productivity +1",
+  "description": "Barns and pens that store herd animals and prepare them for nearby slaughterhouses."
+ },
+ {
+  "id": "tannery",
+  "name": "Tannery",
+  "cost": 6,
+  "lots": 1,
+  "economy": 1,
+  "stability": 1,
+  "limitText": "Cannot be adjacent to House, Mansion, Noble Villa, or Tenement",
+  "settlementText": "Society –1",
+  "description": "A structure that prepares hides and leather."
+ },
+ {
+  "id": "tavern",
+  "name": "Tavern",
+  "cost": 12,
+  "lots": 1,
+  "economy": 1,
+  "loyalty": 1,
+  "limitText": "Adjacent to 1 House or Mansion",
+  "specialText": "Base value +500 gp",
+  "settlementText": "Corruption +1",
+  "baseValue": 500,
+  "description": "An eating or drinking establishment."
+ },
+ {
+  "id": "temple",
+  "name": "Temple",
+  "cost": 32,
+  "lots": 2,
+  "loyalty": 2,
+  "stability": 2,
+  "unrest": -2,
+  "discounts": [
+   "graveyard",
+   "monument",
+   "shrine"
+  ],
+  "upgradeFrom": [
+   "shrine"
+  ],
+  "magicItems": "2 minor items",
+  "description": "A large place of worship dedicated to a deity."
+ },
+ {
+  "id": "tenement",
+  "name": "Tenement",
+  "cost": 1,
+  "lots": 1,
+  "unrest": 2,
+  "upgradeTo": [
+   "house"
+  ],
+  "specialText": "Counts as House for buildings that must be adjacent to a House",
+  "description": "A staggering number of low-rent housing units."
+ },
+ {
+  "id": "theater",
+  "name": "Theater",
+  "cost": 24,
+  "lots": 2,
+  "economy": 2,
+  "stability": 2,
+  "discounts": [
+   "brothel",
+   "exotic-artisan",
+   "inn",
+   "park",
+   "tavern"
+  ],
+  "upgradeTo": [
+   "arena"
+  ],
+  "description": "A venue for entertainments such as plays, operas, and concerts."
+ },
+ {
+  "id": "town-hall",
+  "name": "Town Hall",
+  "cost": 22,
+  "lots": 2,
+  "economy": 1,
+  "loyalty": 1,
+  "stability": 1,
+  "discounts": [
+   "barracks",
+   "cistern",
+   "dump",
+   "jail",
+   "watchtower"
+  ],
+  "settlementText": "Law +1",
+  "description": "A public venue for town meetings, repository for town records, and offices for minor bureaucrats."
+ },
+ {
+  "id": "trade-shop",
+  "name": "Trade Shop",
+  "cost": 10,
+  "lots": 1,
+  "economy": 1,
+  "stability": 1,
+  "upgradeTo": [
+   "guildhall"
+  ],
+  "limitText": "Adjacent to 1 House",
+  "specialText": "Base value +500 gp",
+  "settlementText": "Productivity +1",
+  "baseValue": 500,
+  "description": "A shop front for a tradesperson, such as a baker, butcher, candle maker, cobbler, rope maker, or wainwright."
+ },
+ {
+  "id": "university",
+  "name": "University",
+  "cost": 78,
+  "lots": 4,
+  "economy": 3,
+  "loyalty": 3,
+  "fame": 1,
+  "discounts": [
+   "academy",
+   "bardic-college",
+   "library",
+   "magical-academy",
+   "military-academy",
+   "museum"
+  ],
+  "upgradeFrom": [
+   "academy"
+  ],
+  "magicItems": "4 minor scrolls or wondrous items, 2 medium scrolls or wondrous items",
+  "settlementText": "Lore +4, Society +3; increase Lore bonus by 4 for questions relating to one Knowledge or Profession skill",
+  "description": "An institution of higher learning, focusing mainly on mundane subjects but dabbling in magical theory."
+ },
+ {
+  "id": "watchtower",
+  "name": "Watchtower",
+  "cost": 12,
+  "lots": 1,
+  "stability": 1,
+  "unrest": -1,
+  "specialText": "Defense +2",
+  "defense": 2,
+  "description": "A tall structure that serves as a guard post."
+ },
+ {
+  "id": "watergate",
+  "name": "Watergate",
+  "cost": 2,
+  "lots": 0,
+  "specialText": "Shares City Wall",
+  "description": "A gate in a City Wall that allows water (such as a river, Aqueduct, or Waterway) to enter the settlement. A Watergate has underwater defenses to block unwanted access. If you construct a Watergate when you construct a City Wall, the Watergate does not count toward the limit of the number of buildings you can construct per turn."
+ },
+ {
+  "id": "waterfront",
+  "name": "Waterfront",
+  "cost": 90,
+  "lots": 4,
+  "economy": 4,
+  "discounts": [
+   "black-market",
+   "guildhall",
+   "market",
+   "pier"
+  ],
+  "upgradeFrom": [
+   "pier"
+  ],
+  "limitText": "Adjacent to water district border, 1 per settlement",
+  "specialText": "Base value +4,000 gp; halves Loyalty penalty for Taxation edicts",
+  "magicItems": "2 minor wondrous items, 1 medium wondrous item, 1 major wondrous item",
+  "settlementText": "Productivity +2",
+  "baseValue": 4000,
+  "description": "A port for waterborne arrival and departure, with facilities for shipping and shipbuilding."
+ },
+ {
+  "id": "waterway",
+  "name": "Waterway",
+  "cost": 3,
+  "lots": 1,
+  "specialText": "Counts as water district border for adjacent buildings",
+  "description": "A river or canal occupying part of the District Grid. At the GM's option, a natural Waterway may already exist on the grid, requiring no action or BP to build. If you construct a City Wall that touches or crosses the Waterway, you must also build Watergates on the same turn."
+ }
+]
