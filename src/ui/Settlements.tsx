@@ -6,6 +6,7 @@ import {
 import { buildCost, upgradeCost } from '../engine/costs';
 import { checkPlacement, districtIssues, footprint, lotKey, occupancy, SIDE_LABEL, type Orientation } from '../engine/grid';
 import { computeStats, fmt, settlementStats } from '../engine/stats';
+import { coordLabel, parse } from '../engine/map';
 import { building, BUILDINGS, CATEGORY_LABEL, type BuildingDef, type Category } from '../rules/buildings';
 import { TERRAIN, type Terrain } from '../rules/kingdom';
 import { update } from '../state/store';
@@ -128,6 +129,7 @@ function SettlementView({ k, s, d, setDId }: { k: Kingdom; s: Settlement; d: Dis
         <span className="chip">Base value {ss.baseValue.toLocaleString()} gp</span>
         <span className="chip">Defense {ss.defense}</span>
         <span className="chip">{TERRAIN[s.terrain].label}</span>
+        {s.hexKey && k.map && <span className="chip">Hex {coordLabel(...parse(s.hexKey))}</span>}
         <span className="spacer" />
         {confirmDelete ? (
           <span className="row small">Remove {s.name} and all its buildings?

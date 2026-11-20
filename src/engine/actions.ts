@@ -15,7 +15,7 @@ export function changeUnrest(k: Kingdom, delta: number) {
   return k.unrest - before;
 }
 
-function spend(k: Kingdom, bp: number) {
+export function spend(k: Kingdom, bp: number) {
   if (k.settings.setupMode) return 0;
   k.treasury -= bp;
   return -bp;

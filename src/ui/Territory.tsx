@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { activateMap, newMap } from '../engine/map';
+import { HexMapView } from './HexMap';
 import { abandonHex, addFeature, claimHex, loseHex, removeFeature } from '../engine/actions';
 import { computeStats } from '../engine/stats';
 import { FEATURES, TERRAIN, type FeatureDef, type Terrain } from '../rules/kingdom';
@@ -15,7 +17,86 @@ function costFor(f: FeatureDef, terrain: Terrain, river: boolean, size: number):
   return 0;
 }
 
-export function Territory({ k }: { k: Kingdom }) {
+export function Territory({ k, go }: { k: Kingdom; go: (t: 'settlements') => void }) {
+  if (k.map?.active) return <MapTerritory k={k} go={go} />;
+  return (
+    <>
+      <MapSetup k={k} go={go} />
+      <CountsTerritory k={k} />
+    </>
+  );
+}
+
+function MapTerritory({ k, go }: { k: Kingdom; go: (t: 'settlements') => void }) {
+  const st = computeStats(k);
+  const t = k.turnState;
+  const f = k.features;
+  const rows: [string, number][] = [
+    ['Farms', f.farm ?? 0], ['Fisheries', f.fishery ?? 0], ['Mines', f.mine ?? 0], ['Quarries', f.quarry ?? 0],
+    ['Sawmills', f.sawmill ?? 0], ['Road hexes', f.road ?? 0], ['Highway hexes', f.highway ?? 0], ['Forts', f.fort ?? 0],
+    ['Watchtowers', f.watchtower ?? 0], ['River hexes', f.river ?? 0], ['Resources', f.resource ?? 0],
+    ['Landmarks', f.landmark ?? 0], ['Lairs', f.lair ?? 0],
+  ];
+  return (
+    <>
+      <div className="row">
+        <span className="chip">Size {k.size}</span>
+        <span className="chip">Hex claims this turn {t.hexClaims} / {st.limits.hexClaims}</span>
+        <span className="chip">Improvements this turn {t.improvements} / {st.limits.improvements}</span>
+        {k.settings.setupMode && <span className="chip warn">Setup mode: everything is free</span>}
+      </div>
+      <HexMapView k={k} go={go} />
+      <div className="grid-2">
+        <Panel title="From the map">
+          <p className="small muted">Counted from your claimed hexes and fed into the kingdom sheet.</p>
+          <table className="breakdown"><tbody>
+            {rows.filter(([, n]) => n).map(([l, n]) => <tr key={l}><td>{l}</td><td>{n}</td></tr>)}
+          </tbody></table>
+        </Panel>
+        <Panel title="Aqueducts">
+          <p className="small muted">An Aqueduct runs across several hexes from a hill or mountain source to a settlement. Count each finished one here: Loyalty +1, Stability +1.</p>
+          <FeatureTable k={k} group="improvement" terrain="plains" river={false} only={['aqueduct']} />
+        </Panel>
+      </div>
+    </>
+  );
+}
+
+function MapSetup({ k, go }: { k: Kingdom; go: (t: 'settlements') => void }) {
+  const [confirm, setConfirm] = useState(false);
+  if (!k.map) {
+    return (
+      <Panel title="Hex map">
+        <p>Draw your kingdom on a hex map: paint terrain and rivers, track exploration, claim hexes, and build improvements where they stand.</p>
+        <div><button className="btn primary" onClick={() => update('Create hex map', (d) => { d.map = newMap(16, 12, false); })}>Create a hex map</button></div>
+      </Panel>
+    );
+  }
+  const claimed = Object.values(k.map.hexes).filter((h) => h.status === 'claimed').length;
+  return (
+    <>
+      <div className="callout info stack">
+        <p>
+          Your kingdom still uses the counts below. Set up the map first: paint terrain, then turn on Setup mode (Options) and use the
+          Exploration brush to mark your {k.size} claimed hexes for free, and add their improvements.
+        </p>
+        <p>When it matches, switch over. Size and improvements will then come from the map ({claimed} claimed hex{claimed === 1 ? '' : 'es'} right now).</p>
+        <div className="row">
+          {confirm ? (
+            <>
+              <span className="small">Size will become {claimed} (now {k.size}). Improvement counts will be replaced by what's on the map.</span>
+              <button className="btn sm primary" onClick={() => update('Use hex map', activateMap)}>Switch to the map</button>
+              <button className="btn sm ghost" onClick={() => setConfirm(false)}>Not yet</button>
+            </>
+          ) : <button className="btn primary" onClick={() => setConfirm(true)}>Use the map for Size and improvements</button>}
+        </div>
+      </div>
+      <HexMapView k={k} go={go} />
+    </>
+  );
+}
+
+function CountsTerritory({ k }: { k: Kingdom }) {
   const st = computeStats(k);
   const setup = k.settings.setupMode;
   const [terrain, setTerrain] = useState<Terrain>('plains');
@@ -24,10 +105,6 @@ export function Territory({ k }: { k: Kingdom }) {
   const t = k.turnState;
   return (
     <>
-      <div className="callout info">
-        The hex map is coming in a later version. For now, track your territory as counts: each claimed hex adds 1 to Size,
-        and improvements apply their bonuses kingdom-wide.
-      </div>
       <div className="grid-2">
         <Panel title={`Size ${k.size}`}>
           <p className="small muted">
@@ -64,14 +141,14 @@ export function Territory({ k }: { k: Kingdom }) {
   );
 }
 
-function FeatureTable({ k, group, terrain, river }: { k: Kingdom; group: FeatureDef['group']; terrain: Terrain; river: boolean }) {
+function FeatureTable({ k, group, terrain, river, only }: { k: Kingdom; group: FeatureDef['group']; terrain: Terrain; river: boolean; only?: string[] }) {
   const setup = k.settings.setupMode;
   return (
     <div className="table-wrap">
       <table className="list">
         <thead><tr><th>Feature</th><th>Effect</th><th>Cost</th><th>Count</th><th /></tr></thead>
         <tbody>
-          {FEATURES.filter((f) => f.group === group).map((f) => {
+          {FEATURES.filter((f) => f.group === group && (!only || only.includes(f.id))).map((f) => {
             const cost = costFor(f, terrain, river, k.size);
             const n = k.features[f.id] ?? 0;
             const blocked = cost === null;

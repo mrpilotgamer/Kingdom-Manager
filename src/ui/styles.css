@@ -24,6 +24,9 @@
   --cat-learning: #bcd3ea;
   --cat-leisure: #efc2d6;
   --cat-water: #b5dde0;
+  --hex-plains: #dfe8b0; --hex-hills: #d3bd86; --hex-forest: #8fb478; --hex-jungle: #5f9a66; --hex-marsh: #a4bcae;
+  --hex-mountains: #a8a197; --hex-desert: #efdca3; --hex-water: #9cc3e0; --hex-line: #ffffff;
+  --fog: #e8ebe6; --fog-line: #cdd4cf; --road: #7a5a32; --river: #3f7fb8; --border: #b0322a;
   --font-display: 'Marcellus SC', 'Palatino Linotype', Palatino, Georgia, serif;
   --font-body: 'Source Sans 3', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --radius: 8px;
@@ -35,6 +38,9 @@
     --water: #1d3a52; --water-ink: #a9cdec; --street: #26322f;
     --cat-housing: #4d4430; --cat-commerce: #5c4426; --cat-faith: #3f3857; --cat-military: #5a3530; --cat-civic: #2f4a3c;
     --cat-industry: #46413a; --cat-learning: #2c4359; --cat-leisure: #573247; --cat-water: #22474b;
+    --hex-plains: #59613a; --hex-hills: #6a5a39; --hex-forest: #34573a; --hex-jungle: #24472f; --hex-marsh: #3e5249;
+    --hex-mountains: #5a5650; --hex-desert: #6f6340; --hex-water: #24496a; --hex-line: #111917;
+    --fog: #1c2523; --fog-line: #2a3532; --road: #d0a868; --river: #6fb0e8; --border: #ff7a66;
     color-scheme: dark;
   }
 }
@@ -44,6 +50,9 @@
   --water: #1d3a52; --water-ink: #a9cdec; --street: #26322f;
   --cat-housing: #4d4430; --cat-commerce: #5c4426; --cat-faith: #3f3857; --cat-military: #5a3530; --cat-civic: #2f4a3c;
   --cat-industry: #46413a; --cat-learning: #2c4359; --cat-leisure: #573247; --cat-water: #22474b;
+  --hex-plains: #59613a; --hex-hills: #6a5a39; --hex-forest: #34573a; --hex-jungle: #24472f; --hex-marsh: #3e5249;
+  --hex-mountains: #5a5650; --hex-desert: #6f6340; --hex-water: #24496a; --hex-line: #111917;
+  --fog: #1c2523; --fog-line: #2a3532; --road: #d0a868; --river: #6fb0e8; --border: #ff7a66;
   color-scheme: dark;
 }
 
@@ -222,3 +231,35 @@ table.list td { padding: 8px; border-bottom: 1px solid var(--line); vertical-ali
 .welcome { max-width: 640px; margin: 40px auto; }
 .footer { color: var(--muted); font-size: 0.8rem; padding-block: 0 30px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* Hex map */
+.hexmap-scroll { overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); max-height: 75vh; }
+.hexmap { display: block; min-width: 100%; height: auto; user-select: none; -webkit-user-select: none; }
+.hexmap.painting { touch-action: none; cursor: crosshair; }
+.hexmap [data-key] { cursor: pointer; }
+.hx { stroke: var(--hex-line); stroke-width: 1.5; }
+.t-plains { fill: var(--hex-plains); } .t-hills { fill: var(--hex-hills); } .t-forest { fill: var(--hex-forest); }
+.t-jungle { fill: var(--hex-jungle); } .t-marsh { fill: var(--hex-marsh); } .t-mountains { fill: var(--hex-mountains); }
+.t-desert { fill: var(--hex-desert); } .t-water { fill: var(--hex-water); }
+.hx-explored { fill: var(--surface); opacity: 0.35; pointer-events: none; }
+.hx-claimed { fill: var(--accent); opacity: 0.12; pointer-events: none; }
+.hx-selected { fill: none; stroke: var(--ink); stroke-width: 3; }
+.hexmap .border { stroke: var(--border); stroke-width: 3.5; stroke-linecap: round; }
+.hexmap .river { stroke: var(--river); stroke-width: 4; stroke-linecap: round; }
+.hexmap .canal { stroke: var(--river); stroke-width: 2.5; stroke-dasharray: 5 3; }
+.hexmap .road { stroke: var(--road); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 6 3; }
+.hexmap .highway { stroke: var(--road); stroke-width: 4; stroke-linecap: round; }
+.hexmap .road-dot { fill: var(--road); }
+.hexmap .town { fill: var(--ink); stroke: var(--surface); stroke-width: 1.2; }
+.hexmap .capital { fill: var(--gold); stroke: var(--ink); stroke-width: 1; }
+.hexmap text { font-family: var(--font-body); text-anchor: middle; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; fill: var(--ink); }
+.hexmap .town-label { font-size: 10px; font-weight: 700; }
+.hexmap .hex-label { font-size: 8.5px; font-style: italic; }
+.hexmap .badge { fill: var(--surface); stroke: var(--ink); stroke-width: 0.8; }
+.hexmap .badge-text { font-size: 7.5px; font-weight: 700; stroke-width: 0; }
+.hexmap .special { fill: var(--gold); stroke: var(--ink); stroke-width: 0.8; }
+.hexmap .special-text { font-size: 7px; font-weight: 700; stroke-width: 0; fill: var(--ink); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
+.terrain-swatches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.terrain-swatches button { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 6px 8px; cursor: pointer; font-weight: 600; }
+.terrain-swatches button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }

@@ -42,7 +42,7 @@ export function Turn({ k, go }: { k: Kingdom; go: (t: Tab) => void }) {
       </div>
       <Panel title={`Turn ${k.turn} · ${PHASES[idx].label} phase`}>
         <p className="muted">{PHASES[idx].summary}</p>
-        {phase === 'upkeep' && <Upkeep k={k} />}
+        {phase === 'upkeep' && <Upkeep k={k} go={go} />}
         {phase === 'edict' && <EdictPhase k={k} go={go} />}
         {phase === 'income' && <Income k={k} />}
         {phase === 'event' && <EventPhase k={k} />}
@@ -58,7 +58,7 @@ export function Turn({ k, go }: { k: Kingdom; go: (t: Tab) => void }) {
   );
 }
 
-function Upkeep({ k }: { k: Kingdom }) {
+function Upkeep({ k, go }: { k: Kingdom; go: (t: Tab) => void }) {
   const st = computeStats(k);
   const done = k.turnState.done;
   const anarchy = k.unrest >= 20;
@@ -97,7 +97,9 @@ function Upkeep({ k }: { k: Kingdom }) {
       {k.unrest >= 11 && !anarchy && (
         <div className="callout bad row">
           <span style={{ flex: 1 }}>Unrest is {k.unrest}: the kingdom loses 1 hex this Upkeep. The leaders choose which.</span>
-          <button className="btn sm danger" onClick={() => update('Lose hex', loseHex)}>Lose a hex</button>
+          {k.map?.active
+            ? <button className="btn sm danger" onClick={() => go('territory')}>Choose it on the map</button>
+            : <button className="btn sm danger" onClick={() => update('Lose hex', loseHex)}>Lose a hex</button>}
         </div>
       )}
       {anarchy && <p className="callout bad">The kingdom is in anarchy. Restoring order takes quests and adventures; the kingdom can take no actions until then.</p>}
@@ -115,7 +117,7 @@ function EdictPhase({ k, go }: { k: Kingdom; go: (t: Tab) => void }) {
         <div><button className="btn" onClick={() => go('leaders')}>Open leadership</button></div>
       </Step>
       <Step n={2} title="Claim and abandon hexes">
-        <p className="small">{t.hexClaims} of {st.limits.hexClaims} claims used this turn.</p>
+        <p className="small">{t.hexClaims} of {st.limits.hexClaims} claims used this turn.{k.map?.active ? ' Claim hexes by selecting them on the map.' : ''}</p>
         <div><button className="btn" onClick={() => go('territory')}>Open territory</button></div>
       </Step>
       <Step n={3} title="Build terrain improvements">

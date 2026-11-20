@@ -101,7 +101,7 @@ export function App() {
           {tab === 'overview' && <Overview k={k} />}
           {tab === 'turn' && <Turn k={k} go={go} />}
           {tab === 'settlements' && <Settlements k={k} />}
-          {tab === 'territory' && <Territory k={k} />}
+          {tab === 'territory' && <Territory k={k} go={go} />}
           {tab === 'leaders' && <Leaders k={k} />}
           {tab === 'log' && <Log k={k} />}
           {tab === 'settings' && <Settings k={k} onNew={() => setCreating(true)} />}

@@ -29,6 +29,32 @@ export interface Settlement {
   name: string;
   terrain: Terrain;
   districts: District[];
+  /** Map hex this settlement sits in ("col,row"), when the kingdom uses the hex map. */
+  hexKey?: string;
+}
+
+export type HexTerrain = Exclude<Terrain, 'cavern'> | 'water';
+export type HexStatus = 'unexplored' | 'explored' | 'cleared' | 'claimed';
+export type HexImprovement = 'farm' | 'fishery' | 'mine' | 'quarry' | 'sawmill' | 'road' | 'highway' | 'canal' | 'fort' | 'watchtower';
+export type HexSpecial = 'resource' | 'landmark' | 'lair' | 'ruin' | 'building' | 'freeCity' | 'bridge';
+
+export interface Hex {
+  terrain: HexTerrain;
+  status: HexStatus;
+  river?: boolean;
+  special?: HexSpecial;
+  improvements: HexImprovement[];
+  name?: string;
+  notes?: string;
+}
+
+export interface HexMap {
+  cols: number;
+  rows: number;
+  /** Keyed by "col,row" (offset coordinates, flat-top hexes, odd columns shifted down). Missing = unexplored plains. */
+  hexes: Record<string, Hex>;
+  /** When true, Size and terrain improvements come from the map instead of hand-entered counts. */
+  active: boolean;
 }
 
 export interface Leader {
@@ -87,6 +113,7 @@ export interface Kingdom {
   edicts: { holiday: number; promotion: number; taxation: number };
   features: Partial<Record<TerrainFeature, number>>;
   settlements: Settlement[];
+  map?: HexMap;
   modifiers: Modifier[];
   log: LogEntry[];
   turnState: TurnState;
