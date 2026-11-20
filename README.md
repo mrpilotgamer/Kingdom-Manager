@@ -3,6 +3,8 @@
 A web app for running **Pathfinder 1e kingdom building** (Ultimate Campaign rules). It keeps the kingdom sheet,
 does the math, and walks your group through each kingdom turn.
 
+**Live app:** https://kingdom-manager.vercel.app (redeploys automatically on every push to `main`)
+
 ## What it does today
 
 - **Kingdom sheet**: Economy, Loyalty, Stability, Unrest, Consumption, Control DC, Treasury, and Fame, calculated
