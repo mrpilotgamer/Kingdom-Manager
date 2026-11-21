@@ -17,6 +17,10 @@ does the math, and walks your group through each kingdom turn.
 - **Hex map**: paint terrain and rivers, mark hexes explored and cleared, claim hexes next to your border, and build
   Farms, Roads, Mines, Forts, and other improvements where the terrain allows. Size and improvement bonuses come straight
   from the map. Kingdoms made before the map can keep using counts, or switch to the map when ready.
+- **Random maps**: generate terrain from a shareable seed with climate, water, ruggedness, and special-site settings.
+  Rivers run downhill from the high ground, the capital lands on a good site, and special sites stay hidden in the
+  Players' view until explored. Regenerate any time; claimed hexes are kept. Grow or shrink the map from any side, and
+  new hexes continue the generated terrain.
 - **Turn wizard**: Upkeep → Edict → Income → Event. Type in your own d20 rolls or let the app roll. It tracks
   per-turn limits (Table 4–4) and rolls on the event tables, showing the full event text.
 - **Chronicle and Undo**: every change is logged, and the last 40 changes can be undone.

@@ -1,5 +1,6 @@
 import { newDistrict } from '../engine/actions';
 import { key, newMap, syncFromMap } from '../engine/map';
+import type { Generated } from '../engine/mapgen';
 import type { Alignment, Attr, Terrain } from '../rules/kingdom';
 import type { Hex, HexImprovement, HexMap, HexTerrain, Kingdom, Lot, PlacedBuilding } from './types';
 import { uid } from './util';
@@ -28,13 +29,21 @@ export function blankKingdom(name: string, alignment: Alignment): Kingdom {
 }
 
 /** Founding a Kingdom: claim the first hex (1 BP) and prepare the site, then build from the Treasury. */
-export function createKingdom(input: NewKingdomInput, prepCost: number): Kingdom {
+export function createKingdom(input: NewKingdomInput, prepCost: number, generated?: Generated): Kingdom {
   const k = blankKingdom(input.name, input.alignment);
   k.treasury = input.startingBP - 1 - prepCost;
-  const map = newMap(16, 12, true);
-  const home = key(7, 5);
-  const terrain: HexTerrain = input.terrain === 'cavern' ? 'mountains' : input.terrain;
-  map.hexes[home] = { terrain, status: 'claimed', improvements: [] };
+  let map: HexMap, home: string;
+  if (generated) {
+    map = structuredClone(generated.map);
+    home = generated.capital;
+    map.hexes[home].status = 'claimed';
+    map.hexes[home].name = undefined;
+  } else {
+    map = newMap(16, 12, true);
+    home = key(7, 5);
+    const terrain: HexTerrain = input.terrain === 'cavern' ? 'mountains' : input.terrain;
+    map.hexes[home] = { terrain, status: 'claimed', improvements: [] };
+  }
   k.map = map;
   k.settlements.push({ id: uid(), name: input.settlementName, terrain: input.terrain, districts: [newDistrict('District 1')], hexKey: home });
   syncFromMap(k);

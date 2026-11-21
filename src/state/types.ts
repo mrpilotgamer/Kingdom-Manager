@@ -1,5 +1,6 @@
 import type { Alignment, Attr, Terrain, TerrainFeature } from '../rules/kingdom';
 import type { RoleId } from '../rules/leadership';
+import type { GenParams } from '../engine/mapgen';
 
 export type Side = 'n' | 'e' | 's' | 'w';
 export type Lot = [row: number, col: number];
@@ -55,6 +56,14 @@ export interface HexMap {
   hexes: Record<string, Hex>;
   /** When true, Size and terrain improvements come from the map instead of hand-entered counts. */
   active: boolean;
+  /**
+   * Absolute coordinate of column/row 0. Adding columns on the left lowers originC; odd absolute columns sit
+   * half a hex lower, so the grid keeps its shape. Also lets generated terrain continue when the map grows.
+   */
+  originC?: number;
+  originR?: number;
+  /** Generator settings, if the map was generated. */
+  gen?: GenParams;
 }
 
 export interface Leader {

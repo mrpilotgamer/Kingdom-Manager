@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import {
-  build, checkClaim, checkImprovement, claim, coordLabel, editHex, EXPLORE_TIME, foundSettlementAt, getHex, HEX_TERRAIN,
-  hexName, IMP_BY_ID, IMPROVEMENTS, key, neighborKeys, parse, removeImprovement, resizeMap, shrinkBlocked, SPECIALS,
-  STATUS_LABEL, syncFromMap, unclaim,
+  build, checkClaim, checkImprovement, claim, colParity, coordLabel, editHex, EXPLORE_TIME, foundSettlementAt, getHex,
+  HEX_TERRAIN, hexName, IMP_BY_ID, IMPROVEMENTS, key, MAX_MAP, neighborKeys, parse, regenerate, removeImprovement,
+  resizeSide, shrinkBlocked, SPECIALS, STATUS_LABEL, syncFromMap, unclaim, type Side,
 } from '../engine/map';
+import { CLIMATES, DEFAULT_GEN, randomSeed, RUGGED, SPECIAL_LEVELS, WATERS, type GenOptions } from '../engine/mapgen';
 import { log } from '../engine/actions';
 import { TERRAIN } from '../rules/kingdom';
 import { update } from '../state/store';
@@ -12,7 +13,6 @@ import { Panel, useId } from './common';
 
 const S = 30; // hex radius in SVG units
 const H = Math.sqrt(3) * S;
-const center = (c: number, r: number): [number, number] => [S + c * 1.5 * S, H / 2 + H * (r + 0.5 * (c & 1))];
 const corner = (cx: number, cy: number, i: number): [number, number] => [cx + S * Math.cos((Math.PI / 3) * i), cy + S * Math.sin((Math.PI / 3) * i)];
 const points = (cx: number, cy: number) => Array.from({ length: 6 }, (_, i) => corner(cx, cy, i).join(',')).join(' ');
 const edgeMid = (cx: number, cy: number, i: number): [number, number] => {
@@ -20,7 +20,12 @@ const edgeMid = (cx: number, cy: number, i: number): [number, number] => {
   return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
 };
 
-type Tool = 'select' | 'terrain' | 'river' | 'status';
+type Tool = 'select' | 'terrain' | 'river' | 'status' | 'generate';
+type ViewMode = 'gm' | 'players';
+const VIEW_KEY = 'kingdom-manager/map-view';
+function loadView(): ViewMode {
+  try { return localStorage.getItem(VIEW_KEY) === 'players' ? 'players' : 'gm'; } catch { return 'gm'; }
+}
 const TERRAINS = Object.keys(HEX_TERRAIN) as HexTerrain[];
 const ZOOMS = [1, 1.5, 2, 3];
 
@@ -32,6 +37,15 @@ export function HexMapView({ k, go }: { k: Kingdom; go: (tab: 'settlements') => 
   const [selected, setSelected] = useState<string | null>(() => k.settlements.find((s) => s.hexKey)?.hexKey ?? null);
   const [zoom, setZoom] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 640 ? 2 : 0));
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [viewMode, setViewModeState] = useState<ViewMode>(loadView);
+  const setViewMode = (v: ViewMode) => {
+    setViewModeState(v);
+    try { localStorage.setItem(VIEW_KEY, v); } catch { /* per-browser preference only */ }
+  };
+  const players = viewMode === 'players';
+  const center = (c: number, r: number): [number, number] => [S + c * 1.5 * S, H / 2 + H * (r + 0.5 * colParity(m, c))];
+  /** Players don't see what's in unexplored hexes. */
+  const hidden = (h: Hex) => players && h.status === 'unexplored';
   const [stroke, setStroke] = useState<{ keys: Set<string>; river?: boolean } | null>(null);
 
   const width = S * 1.5 * m.cols + S * 0.5;
@@ -108,11 +122,15 @@ export function HexMapView({ k, go }: { k: Kingdom; go: (tab: 'settlements') => 
       <div className="stack" style={{ gap: 12, minWidth: 0 }}>
         <div className="row">
           <div className="segmented" role="group" aria-label="Map tool">
-            {([['select', 'Select'], ['terrain', 'Paint terrain'], ['river', 'Rivers'], ['status', 'Exploration']] as [Tool, string][]).map(([t, l]) => (
+            {([['select', 'Select'], ['terrain', 'Paint terrain'], ['river', 'Rivers'], ['status', 'Exploration'], ['generate', 'Generate']] as [Tool, string][]).map(([t, l]) => (
               <button key={t} aria-pressed={tool === t} onClick={() => setTool(t)}>{l}</button>
             ))}
           </div>
           <span className="spacer" />
+          <div className="segmented" role="group" aria-label="Show the map as">
+            <button aria-pressed={!players} onClick={() => setViewMode('gm')} title="See all terrain and special sites">GM view</button>
+            <button aria-pressed={players} onClick={() => setViewMode('players')} title="Hide everything in unexplored hexes">Players' view</button>
+          </div>
           <button className="btn sm" aria-label="Zoom out" disabled={zoom === 0} onClick={() => setZoom(zoom - 1)}>−</button>
           <span className="small num" style={{ minWidth: '3em', textAlign: 'center' }}>{ZOOMS[zoom] * 100}%</span>
           <button className="btn sm" aria-label="Zoom in" disabled={zoom === ZOOMS.length - 1} onClick={() => setZoom(zoom + 1)}>+</button>
@@ -135,7 +153,7 @@ export function HexMapView({ k, go }: { k: Kingdom; go: (tab: 'settlements') => 
               return (
                 <g key={hk} data-key={hk}>
                   <polygon points={points(cx, cy)} className={`hx t-${h.terrain}`} />
-                  {h.status === 'unexplored' && <polygon points={points(cx, cy)} fill="url(#fog)" opacity="0.85" />}
+                  {h.status === 'unexplored' && <polygon points={points(cx, cy)} fill="url(#fog)" opacity={players ? 1 : 0.6} className={players ? 'hx-hidden' : undefined} />}
                   {h.status === 'explored' && <polygon points={points(cx, cy)} className="hx-explored" />}
                   {h.status === 'claimed' && <polygon points={points(cx, cy)} className="hx-claimed" />}
                 </g>
@@ -145,13 +163,14 @@ export function HexMapView({ k, go }: { k: Kingdom; go: (tab: 'settlements') => 
             <g pointerEvents="none">
               {all.map((hk) => {
                 const h = view(hk);
+                if (hidden(h)) return null;
                 const [cx, cy] = center(...parse(hk));
                 const nb = neighborKeys(m, hk);
                 const lines: JSX.Element[] = [];
                 const link = (cls: string, test: (n: Hex) => boolean, stub: boolean) => {
                   let any = false;
                   nb.forEach((n, i) => {
-                    if (n && test(view(n))) {
+                    if (n && !hidden(view(n)) && test(view(n))) {
                       any = true;
                       const [mx, my] = edgeMid(cx, cy, i);
                       lines.push(<line key={`${cls}${i}`} x1={cx} y1={cy} x2={mx} y2={my} className={cls} />);
@@ -198,6 +217,7 @@ export function HexMapView({ k, go }: { k: Kingdom; go: (tab: 'settlements') => 
             <g pointerEvents="none">
               {all.map((hk) => {
                 const h = view(hk);
+                if (hidden(h)) return null;
                 const [cx, cy] = center(...parse(hk));
                 const st = settlementAt.get(hk);
                 const badges = h.improvements.filter((i) => !['road', 'highway', 'canal'].includes(i));
@@ -217,8 +237,8 @@ export function HexMapView({ k, go }: { k: Kingdom; go: (tab: 'settlements') => 
                         <text x={cx - (badges.length * 15) / 2 + i * 15 + 7} y={cy - (st ? 24 : 7) + 9} className="badge-text">{IMP_BY_ID[b].short}</text>
                       </g>
                     ))}
-                    {h.special && h.status !== 'unexplored' && (
-                      <g>
+                    {h.special && (
+                      <g opacity={h.status === 'unexplored' ? 0.6 : 1}>
                         <rect x={cx + S * 0.38} y={cy - S * 0.62} width={11} height={11} rx={2} transform={`rotate(45 ${cx + S * 0.38 + 5.5} ${cy - S * 0.62 + 5.5})`} className="special" />
                         <text x={cx + S * 0.38 + 5.5} y={cy - S * 0.62 + 8.5} className="special-text">{SPECIALS[h.special].label[0]}</text>
                       </g>
@@ -236,7 +256,11 @@ export function HexMapView({ k, go }: { k: Kingdom; go: (tab: 'settlements') => 
           </svg>
         </div>
         <Legend />
-        <MapSize k={k} />
+        <MapSize k={k} onShift={(side, n) => {
+          if (!selected || n <= 0) return;
+          const [c, r] = parse(selected);
+          setSelected(side === 'left' ? key(c + n, r) : side === 'top' ? key(c, r + n) : selected);
+        }} />
       </div>
       <div className="stack" style={{ gap: 16 }}>
         {tool === 'terrain' && (
@@ -269,7 +293,8 @@ export function HexMapView({ k, go }: { k: Kingdom; go: (tab: 'settlements') => 
             {!k.settings.setupMode && <p className="small muted">Claimed hexes aren't changed by this brush. Use Select to claim or abandon a hex, or turn on Setup mode in Options to paint claimed hexes for free.</p>}
           </Panel>
         )}
-        {tool === 'select' && (selected ? <HexPanel k={k} hk={selected} go={go} /> : (
+        {tool === 'generate' && <GeneratePanel k={k} onDone={(capital) => { if (capital) setSelected(capital); setTool('select'); }} />}
+        {tool === 'select' && (selected ? <HexPanel k={k} hk={selected} go={go} players={players} /> : (
           <Panel title="Select a hex"><p className="muted">Tap a hex to see it, claim it, or build on it.</p></Panel>
         ))}
       </div>
@@ -286,26 +311,103 @@ function Legend() {
           {HEX_TERRAIN[t]}
         </span>
       ))}
-      <span className="muted">Thick line: your border · Hatched: unexplored · Pale: explored but not cleared · ◆ special terrain</span>
+      <span className="muted">Red line: your border · Hatched: unexplored · Pale: explored but not cleared · ◆ special site</span>
     </div>
   );
 }
 
-function MapSize({ k }: { k: Kingdom }) {
+const SIDES: Side[] = ['top', 'bottom', 'left', 'right'];
+
+function MapSize({ k, onShift }: { k: Kingdom; onShift: (side: Side, n: number) => void }) {
   const m = k.map!;
-  const resize = (dc: number, dr: number) => update('Resize map', (d) => resizeMap(d.map!, dc, dr));
+  const [side, setSide] = useState<Side>('right');
+  const [n, setN] = useState(1);
+  const horizontal = side === 'left' || side === 'right';
+  const size = horizontal ? m.cols : m.rows;
+  const unit = horizontal ? (n === 1 ? 'column' : 'columns') : n === 1 ? 'row' : 'rows';
+  const blocked = shrinkBlocked(m, side, n);
+  const ids = { side: useId('ms'), n: useId('ms') };
+  const go = (delta: number) => {
+    update(`${delta > 0 ? 'Add' : 'Remove'} ${unit}`, (d) => { resizeSide(d, side, delta); });
+    onShift(side, delta);
+  };
   return (
-    <div className="row small">
-      <span className="muted">Map {m.cols} × {m.rows} hexes</span>
-      <button className="btn sm" onClick={() => resize(1, 0)}>Add column</button>
-      <button className="btn sm" onClick={() => resize(0, 1)}>Add row</button>
-      <button className="btn sm" disabled={m.cols <= 4 || shrinkBlocked(m, -1, 0)} onClick={() => resize(-1, 0)}>Remove column</button>
-      <button className="btn sm" disabled={m.rows <= 4 || shrinkBlocked(m, 0, -1)} onClick={() => resize(0, -1)}>Remove row</button>
+    <div className="row small resize">
+      <span className="muted">Map {m.cols} × {m.rows}</span>
+      <label htmlFor={ids.n} className="muted">Change</label>
+      <input id={ids.n} type="number" min={1} max={20} value={n} onChange={(e) => setN(Math.max(1, Math.min(20, Number(e.target.value) || 1)))} />
+      <span>{unit} on the</span>
+      <select id={ids.side} aria-label="Side of the map" value={side} onChange={(e) => setSide(e.target.value as Side)}>
+        {SIDES.map((x) => <option key={x} value={x}>{x}</option>)}
+      </select>
+      <button className="btn sm" disabled={size >= MAX_MAP} onClick={() => go(n)}>Add</button>
+      <button className="btn sm" disabled={size - n < 4 || blocked} onClick={() => go(-n)}
+        title={blocked ? 'That would cut off claimed hexes' : undefined}>Remove</button>
+      {blocked && <span className="muted">Can't remove: claimed hexes are there.</span>}
     </div>
   );
 }
 
-function HexPanel({ k, hk, go }: { k: Kingdom; hk: string; go: (tab: 'settlements') => void }) {
+function GeneratePanel({ k, onDone }: { k: Kingdom; onDone: (capital: string | null) => void }) {
+  const m = k.map!;
+  const [o, setO] = useState<GenOptions>(() => ({ ...DEFAULT_GEN, ...(m.gen ? { climate: m.gen.climate, water: m.gen.water, ruggedness: m.gen.ruggedness, specials: m.gen.specials } : {}), seed: randomSeed() }));
+  const claimed = Object.values(m.hexes).filter((h) => h.status === 'claimed').length;
+  return (
+    <Panel title="Generate terrain">
+      <p className="small muted">Builds new terrain, rivers, and special sites for the whole map. Claimed hexes, with their improvements and settlements, stay exactly as they are{claimed ? ` (${claimed} right now)` : ''}. You can undo it.</p>
+      <GenOptionsForm value={o} onChange={setO} />
+      {m.gen && <p className="small muted">Current map seed: <code>{m.gen.seed}</code></p>}
+      <div className="row">
+        <button className="btn primary" onClick={() => {
+          let capital: string | null = null;
+          update('Generate terrain', (d) => { capital = regenerate(d, o); });
+          onDone(claimed ? null : capital);
+        }}>Generate</button>
+        <button className="btn ghost" onClick={() => onDone(null)}>Cancel</button>
+      </div>
+    </Panel>
+  );
+}
+
+export function GenOptionsForm({ value, onChange }: { value: GenOptions; onChange: (o: GenOptions) => void }) {
+  const ids = { seed: useId('g'), c: useId('g'), w: useId('g'), r: useId('g'), s: useId('g') };
+  const set = <K extends keyof GenOptions>(f: K, v: GenOptions[K]) => onChange({ ...value, [f]: v });
+  return (
+    <div className="stack">
+      <div className="row">
+        <label className="field" htmlFor={ids.seed} style={{ flex: 1 }}>Seed
+          <input id={ids.seed} type="text" value={value.seed} onChange={(e) => set('seed', e.target.value)} />
+        </label>
+        <button className="btn" style={{ alignSelf: 'flex-end' }} onClick={() => set('seed', randomSeed())}>New seed</button>
+      </div>
+      <div className="gen-grid">
+        <label className="field" htmlFor={ids.c}>Climate
+          <select id={ids.c} value={value.climate} onChange={(e) => set('climate', e.target.value as GenOptions['climate'])}>
+            {Object.entries(CLIMATES).map(([id, l]) => <option key={id} value={id}>{l}</option>)}
+          </select>
+        </label>
+        <label className="field" htmlFor={ids.w}>Water
+          <select id={ids.w} value={value.water} onChange={(e) => set('water', e.target.value as GenOptions['water'])}>
+            {Object.entries(WATERS).map(([id, l]) => <option key={id} value={id}>{l}</option>)}
+          </select>
+        </label>
+        <label className="field" htmlFor={ids.r}>Terrain
+          <select id={ids.r} value={value.ruggedness} onChange={(e) => set('ruggedness', e.target.value as GenOptions['ruggedness'])}>
+            {Object.entries(RUGGED).map(([id, l]) => <option key={id} value={id}>{l}</option>)}
+          </select>
+        </label>
+        <label className="field" htmlFor={ids.s}>Special sites
+          <select id={ids.s} value={value.specials} onChange={(e) => set('specials', e.target.value as GenOptions['specials'])}>
+            {Object.entries(SPECIAL_LEVELS).map(([id, l]) => <option key={id} value={id}>{l}</option>)}
+          </select>
+        </label>
+      </div>
+      <p className="small muted">The same seed and settings always make the same map, so you can share a seed with another GM.</p>
+    </div>
+  );
+}
+
+function HexPanel({ k, hk, go, players }: { k: Kingdom; hk: string; go: (tab: 'settlements') => void; players: boolean }) {
   const m = k.map!;
   const h = getHex(m, hk);
   const [c, r] = parse(hk);
@@ -317,24 +419,26 @@ function HexPanel({ k, hk, go }: { k: Kingdom; hk: string; go: (tab: 'settlement
   const ids = { name: useId('hx'), terrain: useId('hx'), special: useId('hx'), notes: useId('hx'), town: useId('hx') };
   const claimCheck = checkClaim(k, m, hk);
   const edit = (label: string, fn: (h: Hex) => void) => update(label, (d) => { fn(editHex(d.map!, hk)); syncFromMap(d); });
+  const secret = players && h.status === 'unexplored';
 
   return (
     <>
-      <Panel title={h.name || `Hex ${coordLabel(c, r)}`}>
+      <Panel title={(!secret && h.name) || `Hex ${coordLabel(c, r)}`}>
         <div className="row">
-          <span className={`chip`}>{HEX_TERRAIN[h.terrain]}</span>
+          {!secret && <span className="chip">{HEX_TERRAIN[h.terrain]}</span>}
           <span className={`chip ${h.status === 'claimed' ? 'ok' : ''}`}>{STATUS_LABEL[h.status]}</span>
-          {h.river && <span className="chip">River</span>}
-          {h.special && <span className="chip">{SPECIALS[h.special].label}</span>}
-          {h.name && <span className="chip">{coordLabel(c, r)}</span>}
+          {!secret && h.river && <span className="chip">River</span>}
+          {!secret && h.special && <span className="chip">{SPECIALS[h.special].label}{h.status === 'unexplored' ? ' (undiscovered)' : ''}</span>}
+          {!secret && h.name && <span className="chip">{coordLabel(c, r)}</span>}
         </div>
-        {h.special && <p className="small">{SPECIALS[h.special].effect}</p>}
-        {h.notes && <p className="small muted">{h.notes}</p>}
+        {secret && <p className="small muted">Players' view: nobody knows what's here yet. Switch to GM view to see it.</p>}
+        {!secret && h.special && <p className="small">{SPECIALS[h.special].effect}</p>}
+        {!secret && h.notes && <p className="small muted">{h.notes}</p>}
         {!m.active && <p className="callout info">The map isn't driving your kingdom's numbers yet. Switch it on below the map when your hexes are in place.</p>}
 
         {h.status !== 'claimed' ? (
           <div className="stack">
-            {h.status === 'unexplored' && (
+            {h.status === 'unexplored' && !secret && (
               <p className="small">Exploring takes about {EXPLORE_TIME[h.terrain]} for a party moving 30 ft.</p>
             )}
             <div className="row">
@@ -437,7 +541,7 @@ function HexPanel({ k, hk, go }: { k: Kingdom; hk: string; go: (tab: 'settlement
         </Panel>
       )}
 
-      <Panel title="Edit hex">
+      {!secret && <Panel title="Edit hex">
         <label className="field" htmlFor={ids.name}>Name
           <input id={ids.name} type="text" value={h.name ?? ''} placeholder={coordLabel(c, r)} onChange={(e) => edit('Rename hex', (x) => { x.name = e.target.value || undefined; })} />
         </label>
@@ -458,7 +562,7 @@ function HexPanel({ k, hk, go }: { k: Kingdom; hk: string; go: (tab: 'settlement
         <label className="field" htmlFor={ids.notes}>GM notes
           <textarea id={ids.notes} rows={2} value={h.notes ?? ''} onChange={(e) => edit('Edit notes', (x) => { x.notes = e.target.value || undefined; })} />
         </label>
-      </Panel>
+      </Panel>}
     </>
   );
 }

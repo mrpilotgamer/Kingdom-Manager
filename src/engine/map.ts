@@ -5,6 +5,7 @@ import type { Hex, HexImprovement, HexMap, HexSpecial, HexTerrain, Kingdom } fro
 import { changeUnrest, log, newDistrict, spend } from './actions';
 import { uid } from '../state/util';
 import { computeStats } from './stats';
+import { generateMap, terrainAt, type GenOptions } from './mapgen';
 
 export const key = (c: number, r: number) => `${c},${r}`;
 export const parse = (k: string) => k.split(',').map(Number) as [number, number];
@@ -15,9 +16,12 @@ const DIRS: [number, number][][] = [
   [[1, 1], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, 0]], // odd column
 ];
 
+/** 1 for columns drawn half a hex lower (odd absolute columns). */
+export const colParity = (m: HexMap, c: number) => (c + (m.originC ?? 0)) & 1;
+
 export function neighborKeys(m: HexMap, hk: string): (string | null)[] {
   const [c, r] = parse(hk);
-  return DIRS[c & 1].map(([dc, dr]) => {
+  return DIRS[colParity(m, c)].map(([dc, dr]) => {
     const nc = c + dc, nr = r + dr;
     return nc >= 0 && nr >= 0 && nc < m.cols && nr < m.rows ? key(nc, nr) : null;
   });
@@ -285,21 +289,72 @@ export function activateMap(k: Kingdom) {
   log(k, `Switched territory to the hex map. Size is now ${k.size}.`);
 }
 
-export function resizeMap(m: HexMap, dCols: number, dRows: number) {
-  const cols = Math.max(4, Math.min(60, m.cols + dCols));
-  const rows = Math.max(4, Math.min(60, m.rows + dRows));
-  for (const hk of Object.keys(m.hexes)) {
+export type Side = 'top' | 'bottom' | 'left' | 'right';
+export const MAX_MAP = 80;
+
+/** Claimed hexes in the strip that removing `n` rows or columns from `side` would cut off. */
+export function shrinkBlocked(m: HexMap, side: Side, n: number) {
+  return Object.entries(m.hexes).some(([hk, h]) => {
+    if (h.status !== 'claimed') return false;
     const [c, r] = parse(hk);
-    if (c >= cols || r >= rows) delete m.hexes[hk];
-  }
-  m.cols = cols;
-  m.rows = rows;
+    return side === 'left' ? c < n : side === 'right' ? c >= m.cols - n : side === 'top' ? r < n : r >= m.rows - n;
+  });
 }
 
-/** Hexes that would be cut off by shrinking the map (claimed hexes block it). */
-export function shrinkBlocked(m: HexMap, dCols: number, dRows: number) {
-  return Object.entries(m.hexes).some(([hk, h]) => {
+/**
+ * Grow (n > 0) or shrink (n < 0) the map on one side. Adding on the left or top renumbers hexes and moves the
+ * origin so nothing shifts on screen; new hexes continue the generated terrain when the map has a seed.
+ */
+export function resizeSide(k: Kingdom, side: Side, n: number) {
+  const m = k.map!;
+  const horizontal = side === 'left' || side === 'right';
+  const size = horizontal ? m.cols : m.rows;
+  n = Math.max(4 - size, Math.min(MAX_MAP - size, n));
+  if (!n || (n < 0 && shrinkBlocked(m, side, -n))) return;
+  const shift = side === 'left' || side === 'top' ? n : 0;
+  const moved: Record<string, Hex> = {};
+  const newCols = horizontal ? m.cols + n : m.cols, newRows = horizontal ? m.rows : m.rows + n;
+  const remap = (hk: string) => {
     const [c, r] = parse(hk);
-    return h.status === 'claimed' && (c >= m.cols + dCols || r >= m.rows + dRows);
-  });
+    const nc = side === 'left' ? c + shift : c, nr = side === 'top' ? r + shift : r;
+    return nc >= 0 && nr >= 0 && nc < newCols && nr < newRows ? key(nc, nr) : null;
+  };
+  for (const [hk, h] of Object.entries(m.hexes)) {
+    const to = remap(hk);
+    if (to) moved[to] = h;
+  }
+  for (const s of k.settlements) if (s.hexKey) s.hexKey = remap(s.hexKey) ?? undefined;
+  if (side === 'left') m.originC = (m.originC ?? 0) - shift;
+  if (side === 'top') m.originR = (m.originR ?? 0) - shift;
+  m.cols = newCols;
+  m.rows = newRows;
+  m.hexes = moved;
+  if (m.gen && n > 0) {
+    for (let c = 0; c < m.cols; c++)
+      for (let r = 0; r < m.rows; r++) {
+        const hk = key(c, r);
+        if (!m.hexes[hk]) m.hexes[hk] = { terrain: terrainAt(m.gen, c + (m.originC ?? 0), r + (m.originR ?? 0)), status: 'unexplored', improvements: [] };
+      }
+  }
+  log(k, `${n > 0 ? 'Added' : 'Removed'} ${Math.abs(n)} ${horizontal ? 'column' : 'row'}${Math.abs(n) > 1 ? 's' : ''} ${n > 0 ? 'on' : 'from'} the ${side} of the map.`);
+  return shift;
+}
+
+/**
+ * Regenerate terrain from generator options. Claimed hexes (and their improvements and settlements) are kept;
+ * unclaimed hexes get new terrain but keep how far they've been explored.
+ */
+export function regenerate(k: Kingdom, o: GenOptions) {
+  const m = k.map!;
+  const g = generateMap(o, m.cols, m.rows, m.originC ?? 0, m.originR ?? 0);
+  const anyClaimed = Object.values(m.hexes).some((h) => h.status === 'claimed');
+  for (const [hk, fresh] of Object.entries(g.map.hexes)) {
+    const old = m.hexes[hk];
+    if (old?.status === 'claimed') continue;
+    m.hexes[hk] = { ...fresh, status: anyClaimed ? old?.status ?? 'unexplored' : fresh.status };
+  }
+  m.gen = g.map.gen;
+  syncFromMap(k);
+  log(k, `Generated new terrain from seed "${o.seed}"${anyClaimed ? '; claimed hexes kept as they were' : ''}.`);
+  return g.capital;
 }
