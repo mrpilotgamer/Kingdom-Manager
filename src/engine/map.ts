@@ -354,7 +354,156 @@ export function regenerate(k: Kingdom, o: GenOptions) {
     m.hexes[hk] = { ...fresh, status: anyClaimed ? old?.status ?? 'unexplored' : fresh.status };
   }
   m.gen = g.map.gen;
+  reconcileRivers(m);
   syncFromMap(k);
   log(k, `Generated new terrain from seed "${o.seed}"${anyClaimed ? '; claimed hexes kept as they were' : ''}.`);
   return g.capital;
+}
+
+// ---------- rivers ----------
+/** Edge index from hex a to neighbor b, or -1 if they aren't neighbors. */
+export function dirTo(m: HexMap, a: string, b: string) {
+  return neighborKeys(m, a).indexOf(b);
+}
+
+function addEdge(h: Hex, i: number) {
+  h.riverEdges = [...new Set([...(h.riverEdges ?? []), i])].sort();
+}
+
+/** Join two neighboring hexes with a river. Flowing into a water hex only marks the river's mouth. */
+export function linkRiver(m: HexMap, a: string, b: string) {
+  const i = dirTo(m, a, b);
+  if (i < 0) return false;
+  const ha = editHex(m, a), hb = editHex(m, b);
+  if (ha.terrain === 'water') return false;
+  ha.river = true;
+  addEdge(ha, i);
+  if (hb.terrain !== 'water') {
+    hb.river = true;
+    addEdge(hb, (i + 3) % 6);
+  }
+  return true;
+}
+
+/** Remove the river from a hex, and the matching edges from its neighbors. */
+export function eraseRiver(m: HexMap, hk: string) {
+  const h = editHex(m, hk);
+  h.river = false;
+  delete h.riverEdges;
+  neighborKeys(m, hk).forEach((n, i) => {
+    const nh = n ? m.hexes[n] : undefined;
+    if (nh?.riverEdges) nh.riverEdges = nh.riverEdges.filter((e) => e !== (i + 3) % 6);
+  });
+}
+
+/**
+ * Put a river in one hex and connect it sensibly: to up to two neighboring river ends (hexes whose river
+ * doesn't continue on both sides yet), otherwise to any neighboring river, and to water as a mouth.
+ */
+export function attachRiver(m: HexMap, hk: string) {
+  const h = editHex(m, hk);
+  if (h.terrain === 'water') return;
+  h.river = true;
+  h.riverEdges ??= [];
+  const nb = neighborKeys(m, hk).filter((n): n is string => !!n);
+  const rivers = nb.filter((n) => getHex(m, n).river);
+  const ends = rivers.filter((n) => (getHex(m, n).riverEdges?.length ?? 0) < 2);
+  const picks = (ends.length ? ends : rivers).slice(0, 2);
+  for (const n of picks) linkRiver(m, hk, n);
+  if (picks.length < 2) {
+    const water = nb.find((n) => getHex(m, n).terrain === 'water');
+    if (water) linkRiver(m, hk, water);
+  }
+}
+
+/** Draw a river along a stroke of hexes, in the order they were dragged through. */
+export function drawRiverPath(m: HexMap, keys: string[]) {
+  const land = keys.filter((k) => getHex(m, k).terrain !== 'water');
+  if (land.length === 1) return attachRiver(m, land[0]);
+  for (let i = 0; i < keys.length; i++) {
+    const h = editHex(m, keys[i]);
+    if (h.terrain !== 'water') { h.river = true; h.riverEdges ??= []; }
+    if (i > 0) linkRiver(m, keys[i - 1], keys[i]);
+  }
+  // Connect the ends of the stroke to rivers or water they touch.
+  for (const end of [keys[0], keys[keys.length - 1]]) {
+    if (getHex(m, end).terrain === 'water') continue;
+    const nb = neighborKeys(m, end).filter((n): n is string => !!n && !keys.includes(n));
+    const target = nb.find((n) => getHex(m, n).river) ?? nb.find((n) => getHex(m, n).terrain === 'water');
+    if (target) linkRiver(m, end, target);
+  }
+}
+
+/**
+ * Which edges each river hex's river crosses, for drawing. Uses stored edges where present. River hexes without
+ * them (older maps) are threaded into chains that follow a single course, so bends don't turn into triangles.
+ */
+export function riverLinks(m: HexMap): Map<string, number[]> {
+  const out = new Map<string, Set<number>>();
+  const add = (hk: string, i: number) => { if (!out.has(hk)) out.set(hk, new Set()); out.get(hk)!.add(i); };
+  const loose: string[] = [];
+  for (const [hk, h] of Object.entries(m.hexes)) {
+    if (!h.river || h.terrain === 'water') continue;
+    if (h.riverEdges) { add(hk, -1); for (const e of h.riverEdges) add(hk, e); }
+    else loose.push(hk);
+  }
+  const isLoose = new Set(loose);
+  const unvisited = new Set(loose);
+  const looseNbrs = (hk: string) => neighborKeys(m, hk).filter((n): n is string => !!n && unvisited.has(n));
+  const link = (a: string, b: string) => {
+    const i = dirTo(m, a, b);
+    add(a, i);
+    if (getHex(m, b).terrain !== 'water') add(b, (i + 3) % 6);
+  };
+  while (unvisited.size) {
+    // Start a chain at the hex with the fewest loose neighbors (an end of the river, if there is one).
+    let cur = [...unvisited].sort((a, b) => looseNbrs(a).length - looseNbrs(b).length)[0];
+    unvisited.delete(cur);
+    add(cur, -1);
+    for (;;) {
+      const cands = looseNbrs(cur);
+      if (!cands.length) break;
+      // Prefer the neighbor with the fewest other options: it's the next hex along the course, not a shortcut.
+      const next = cands.sort((a, b) => looseNbrs(a).length - looseNbrs(b).length)[0];
+      link(cur, next);
+      unvisited.delete(next);
+      cur = next;
+    }
+  }
+  // Loose hexes with an open end: join a neighboring stored river, or flow into water.
+  for (const hk of loose) {
+    const edges = out.get(hk)!;
+    if (edges.size - 1 >= 2) continue;
+    const nb = neighborKeys(m, hk);
+    const j = nb.findIndex((n) => !!n && !isLoose.has(n) && getHex(m, n).river && !edges.has(nb.indexOf(n)));
+    const w = nb.findIndex((n) => !!n && getHex(m, n).terrain === 'water');
+    if (j >= 0) link(hk, nb[j]!);
+    else if (w >= 0 && edges.size - 1 < 2) add(hk, w);
+  }
+  return new Map([...out].map(([hk, set]) => [hk, [...set].filter((i) => i >= 0).sort()]));
+}
+
+/** Offset coordinates of the neighbor across edge i (may be off the map). */
+export function neighborCoord(m: HexMap, c: number, r: number, i: number): [number, number] {
+  const [dc, dr] = DIRS[colParity(m, c)][i];
+  return [c + dc, r + dr];
+}
+
+/**
+ * Make river edges agree across the map after hexes change underneath them (regenerating, terrain edits):
+ * an edge into a neighboring river joins it; an edge into dry land with no river is trimmed.
+ */
+export function reconcileRivers(m: HexMap) {
+  for (const [hk, h] of Object.entries(m.hexes)) {
+    if (!h.river || !h.riverEdges || h.terrain === 'water') continue;
+    const nb = neighborKeys(m, hk);
+    h.riverEdges = h.riverEdges.filter((i) => {
+      const n = nb[i];
+      if (!n) return true; // off the map
+      const nh = getHex(m, n);
+      if (nh.terrain === 'water') return true;
+      if (nh.river) { if (nh.riverEdges) addEdge(nh, (i + 3) % 6); return true; }
+      return false;
+    });
+  }
 }

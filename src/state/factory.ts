@@ -1,5 +1,5 @@
 import { newDistrict } from '../engine/actions';
-import { key, newMap, syncFromMap } from '../engine/map';
+import { drawRiverPath, key, newMap, syncFromMap } from '../engine/map';
 import type { Generated } from '../engine/mapgen';
 import type { Alignment, Attr, Terrain } from '../rules/kingdom';
 import type { Hex, HexImprovement, HexMap, HexTerrain, Kingdom, Lot, PlacedBuilding } from './types';
@@ -136,11 +136,12 @@ function sampleMap(): HexMap {
       m.hexes[key(c, r)] = { terrain, status, improvements: [] };
     }
   // A river running north to south through the capital.
-  for (const [c, r] of [[8, 0], [8, 1], [7, 1], [7, 2], [7, 3], [7, 4], [7, 5], [7, 6], [6, 7], [6, 8], [5, 8], [5, 9], [4, 10], [4, 11]]) {
+  const course = [[8, 0], [8, 1], [7, 1], [7, 2], [7, 3], [7, 4], [7, 5], [7, 6], [6, 7], [6, 8], [5, 8], [5, 9], [4, 10], [4, 11]];
+  for (const [c, r] of course) {
     const h = m.hexes[key(c, r)];
     if (h.terrain === 'water' || h.terrain === 'mountains') h.terrain = 'plains';
-    h.river = true;
   }
+  drawRiverPath(m, course.map(([c, r]) => key(c, r)));
   const claimed: [number, number, HexTerrain, HexImprovement[]][] = [
     [7, 5, 'plains', ['road']], [7, 4, 'plains', ['road']], [7, 6, 'plains', ['road']],
     [8, 5, 'plains', ['farm']], [6, 5, 'plains', ['farm']], [6, 6, 'hills', ['mine']], [8, 6, 'forest', []],

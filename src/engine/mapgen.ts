@@ -185,31 +185,60 @@ export function generateMap(o: GenOptions, cols: number, rows: number, c0 = 0, r
     if (starts.length >= riverCount) break;
     if (starts.every(([c, r]) => distance(c, r, s[0], s[1]) >= 4)) starts.push(s);
   }
+  const dirIndex = (c: number, r: number, nc: number, nr: number) =>
+    DIRS[(c + c0) & 1].findIndex(([dc, dr]) => c + dc === nc && r + dr === nr);
+  const addEdge = (h: Hex, i: number) => { h.riverEdges = [...new Set([...(h.riverEdges ?? []), i])].sort(); };
+  const inside = (c: number, r: number) => c >= 0 && r >= 0 && c < cols && r < rows;
   for (const [sc, sr] of starts) {
     let [c, r] = [sc, sr];
     const path: Off[] = [];
+    const onPath = (x: number, y: number) => path.some(([px, py]) => px === x && py === y);
+    // Where the river ends: into a hex (water, a lake, or another river) or off the map through an edge.
+    let end: { into?: Off; lake?: boolean; offEdge?: number } = {};
     for (let step = 0; step < cols + rows; step++) {
       path.push([c, r]);
-      const all = neighbors(cols, rows, c, r);
-      if (step > 0 && all.length < 6) break; // flowed off the map edge
-      const nb = all.filter(([x, y]) => !path.some(([px, py]) => px === x && py === y));
-      if (!nb.length) break;
+      const offEdge = DIRS[(c + c0) & 1].findIndex(([dc, dr]) => !inside(c + dc, r + dr));
+      if (step > 0 && offEdge >= 0) {
+        // Flow off the map if that's downhill from here.
+        const [dc, dr] = DIRS[(c + c0) & 1][offEdge];
+        if (rawHeight(p, c + dc + c0, r + dr + r0) <= height(c, r)) { end = { offEdge }; break; }
+      }
+      // Only step to hexes that don't touch the river's earlier course, so it never doubles back.
+      const nb = neighbors(cols, rows, c, r).filter(([x, y]) =>
+        !onPath(x, y) && !neighbors(cols, rows, x, y).some(([a, b]) => onPath(a, b) && !(a === c && b === r)));
+      if (!nb.length) { end = { lake: true }; break; }
       nb.sort((a, b) => height(...a) - height(...b));
       const [nc, nr] = nb[0];
       const next = hexes[k(nc, nr)];
-      if (next.terrain === 'water' || next.river) break;
-      if (step > 2 && height(nc, nr) > height(c, r) + 0.03) {
-        // Stuck in a hollow: the river ends in a small lake.
-        hexes[k(c, r)].terrain = 'water';
-        path.pop();
-        break;
-      }
+      if (next.terrain === 'water' || next.river) { end = { into: [nc, nr] }; break; }
+      if (step > 2 && height(nc, nr) > height(c, r) + 0.03) { end = { lake: true }; break; }
       [c, r] = [nc, nr];
     }
-    if (path.length >= 3) for (const [c2, r2] of path) {
-      const h = hexes[k(c2, r2)];
-      if (h.terrain === 'mountains' && path.length > 1) h.terrain = 'hills';
+    if (path.length < 3) continue;
+    if (end.lake) {
+      // Stuck in a hollow: the last hex becomes a small lake the river flows into.
+      const [lc, lr] = path.pop()!;
+      hexes[k(lc, lr)].terrain = 'water';
+      end = { into: [lc, lr] };
+    }
+    path.forEach(([pc, pr], i) => {
+      const h = hexes[k(pc, pr)];
+      if (h.terrain === 'mountains') h.terrain = 'hills';
       h.river = true;
+      if (i > 0) {
+        const [qc, qr] = path[i - 1];
+        addEdge(h, dirIndex(pc, pr, qc, qr));
+        addEdge(hexes[k(qc, qr)], dirIndex(qc, qr, pc, pr));
+      }
+    });
+    const [lc, lr] = path[path.length - 1];
+    const last = hexes[k(lc, lr)];
+    if (end.offEdge !== undefined) addEdge(last, end.offEdge);
+    if (end.into) {
+      const [ic, ir] = end.into;
+      addEdge(last, dirIndex(lc, lr, ic, ir));
+      const target = hexes[k(ic, ir)];
+      if (target.river) addEdge(target, dirIndex(ic, ir, lc, lr)); // joins another river
     }
   }
 

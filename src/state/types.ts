@@ -43,6 +43,8 @@ export interface Hex {
   terrain: HexTerrain;
   status: HexStatus;
   river?: boolean;
+  /** Edges (0-5: SE, S, SW, NW, N, NE) the river crosses. Missing on older maps; worked out when drawn. */
+  riverEdges?: number[];
   special?: HexSpecial;
   improvements: HexImprovement[];
   name?: string;

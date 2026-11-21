@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import {
-  build, checkClaim, checkImprovement, claim, colParity, coordLabel, editHex, EXPLORE_TIME, foundSettlementAt, getHex,
-  HEX_TERRAIN, hexName, IMP_BY_ID, IMPROVEMENTS, key, MAX_MAP, neighborKeys, parse, regenerate, removeImprovement,
-  resizeSide, shrinkBlocked, SPECIALS, STATUS_LABEL, syncFromMap, unclaim, type Side,
+  attachRiver, build, checkClaim, checkImprovement, claim, colParity, coordLabel, drawRiverPath, editHex, eraseRiver,
+  EXPLORE_TIME, foundSettlementAt, getHex, HEX_TERRAIN, hexName, IMP_BY_ID, IMPROVEMENTS, key, MAX_MAP, neighborCoord,
+  neighborKeys, parse, reconcileRivers, regenerate, removeImprovement, resizeSide, riverLinks, shrinkBlocked, SPECIALS, STATUS_LABEL,
+  syncFromMap, unclaim, type Side,
 } from '../engine/map';
 import { CLIMATES, DEFAULT_GEN, randomSeed, RUGGED, SPECIAL_LEVELS, WATERS, type GenOptions } from '../engine/mapgen';
 import { log } from '../engine/actions';
 import { TERRAIN } from '../rules/kingdom';
 import { update } from '../state/store';
-import type { Hex, HexSpecial, HexStatus, HexTerrain, Kingdom } from '../state/types';
+import type { Hex, HexMap, HexSpecial, HexStatus, HexTerrain, Kingdom } from '../state/types';
 import { Panel, useId } from './common';
 
 const S = 30; // hex radius in SVG units
@@ -62,13 +63,51 @@ export function HexMapView({ k, go }: { k: Kingdom; go: (tab: 'settlements') => 
   }, [zoom]);
 
   // Show a paint stroke before it is committed as one undoable change.
-  const view = (hk: string): Hex => {
-    const h = getHex(m, hk);
-    if (!stroke?.keys.has(hk)) return h;
-    if (tool === 'terrain') return { ...h, terrain: brush };
-    if (tool === 'river') return { ...h, river: stroke.river };
-    if (tool === 'status') return { ...h, status: statusBrush };
-    return h;
+  const vm: HexMap = useMemo(() => {
+    if (!stroke) return m;
+    const hexes = { ...m.hexes };
+    for (const hk of stroke.keys) {
+      const h = getHex(m, hk);
+      if (tool === 'terrain') hexes[hk] = { ...h, terrain: brush };
+      if (tool === 'river') hexes[hk] = { ...h, river: stroke.river, riverEdges: undefined };
+      if (tool === 'status') hexes[hk] = { ...h, status: statusBrush };
+    }
+    return { ...m, hexes };
+  }, [m, stroke, tool, brush, statusBrush]);
+  const view = (hk: string): Hex => getHex(vm, hk);
+  const rivers = useMemo(() => riverLinks(vm), [vm]);
+
+  /** Where a river crosses edge i of a hex: a point shared by both hexes, nudged along the edge so rivers meander. */
+  const crossing = (hk: string, i: number): [number, number] => {
+    const [c, r] = parse(hk);
+    const [nc, nr] = neighborCoord(m, c, r, i);
+    const oc = m.originC ?? 0, or = m.originR ?? 0;
+    const a: [number, number] = [c + oc, r + or], b: [number, number] = [nc + oc, nr + or];
+    const mine = a[0] < b[0] || (a[0] === b[0] && a[1] < b[1]);
+    const [hc, hr, e] = mine ? [c, r, i] : [nc, nr, (i + 3) % 6];
+    const [cx, cy] = center(hc, hr);
+    const p1 = corner(cx, cy, e), p2 = corner(cx, cy, e + 1);
+    const lo = mine ? a : b, hi = mine ? b : a;
+    let hsh = Math.imul(lo[0] * 73856093 ^ lo[1] * 19349663 ^ hi[0] * 83492791 ^ hi[1] * 2654435761, 1);
+    hsh = Math.imul(hsh ^ (hsh >>> 15), 2246822507) >>> 0;
+    const t = 0.5 + ((hsh % 1000) / 1000 - 0.5) * 0.5;
+    return [p1[0] + (p2[0] - p1[0]) * t, p1[1] + (p2[1] - p1[1]) * t];
+  };
+  /** Smooth river course through a hex: curves meet each edge at a right angle, so neighbors join without kinks. */
+  const riverD = (hk: string, edges: number[]) => {
+    const [cx, cy] = center(...parse(hk));
+    const L = S * 0.55;
+    const leg = (i: number) => {
+      const [px, py] = crossing(hk, i);
+      const [mx, my] = edgeMid(cx, cy, i);
+      const len = Math.hypot(cx - mx, cy - my);
+      return { p: [px, py], q: [px + ((cx - mx) / len) * L, py + ((cy - my) / len) * L] };
+    };
+    if (edges.length === 2) {
+      const a = leg(edges[0]), b = leg(edges[1]);
+      return `M${a.p} C${a.q} ${b.q} ${b.p}`;
+    }
+    return edges.map((i) => { const a = leg(i); return `M${a.p} C${a.q} ${cx},${cy} ${cx},${cy}`; }).join(' ');
   };
 
   const keyAt = (e: PointerEvent) => {
@@ -93,16 +132,20 @@ export function HexMapView({ k, go }: { k: Kingdom; go: (tab: 'settlements') => 
     const label = tool === 'terrain' ? `Paint ${HEX_TERRAIN[brush]}` : tool === 'river' ? (stroke.river ? 'Draw river' : 'Erase river') : `Mark ${STATUS_LABEL[statusBrush]}`;
     update(label, (d) => {
       const dm = d.map!;
+      if (tool === 'river') {
+        if (stroke.river) drawRiverPath(dm, keys);
+        else keys.forEach((hk) => eraseRiver(dm, hk));
+      }
       for (const hk of keys) {
         const h = editHex(dm, hk);
         if (tool === 'terrain') h.terrain = brush;
-        if (tool === 'river') h.river = stroke.river;
         if (tool === 'status') {
           // Claimed status changes only through this brush in setup mode; otherwise it's left alone.
           if ((h.status === 'claimed' || statusBrush === 'claimed') && !d.settings.setupMode) continue;
           h.status = statusBrush;
         }
       }
+      reconcileRivers(dm);
       syncFromMap(d);
       if (tool === 'status' && statusBrush === 'claimed') log(d, `Marked ${keys.length} hex${keys.length > 1 ? 'es' : ''} as claimed (setup). Size is now ${d.size}.`);
     });
@@ -178,14 +221,10 @@ export function HexMapView({ k, go }: { k: Kingdom; go: (tab: 'settlements') => 
                   });
                   if (!any && stub) lines.push(<line key={`${cls}-stub`} x1={cx - S * 0.35} y1={cy} x2={cx + S * 0.35} y2={cy} className={cls} />);
                 };
-                if (h.river) {
-                  const riverN = nb.filter((n) => n && view(n).river).length;
-                  let mouth = riverN <= 1;
-                  link('river', (n) => {
-                    if (n.river) return true;
-                    if (mouth && n.terrain === 'water') { mouth = false; return true; }
-                    return false;
-                  }, true);
+                const course = rivers.get(hk);
+                if (course) {
+                  if (course.length) lines.push(<path key="river" d={riverD(hk, course)} className="river" />);
+                  else lines.push(<circle key="river" cx={cx} cy={cy} r={3} className="river-dot" />);
                 }
                 if (h.improvements.includes('canal')) link('canal', (n) => n.improvements.includes('canal') || !!n.river || n.terrain === 'water', true);
                 const roadish = (x: Hex, hkey?: string) => x.improvements.includes('road') || x.improvements.includes('highway') || (!!hkey && settlementAt.has(hkey));
@@ -278,7 +317,7 @@ export function HexMapView({ k, go }: { k: Kingdom; go: (tab: 'settlements') => 
         )}
         {tool === 'river' && (
           <Panel title="Rivers">
-            <p className="small muted">Tap or drag to draw a river; start on a river hex to erase instead. Rivers connect to neighboring river and water hexes.</p>
+            <p className="small muted">Drag from the source to the mouth to draw a river along that course; it joins any river or water at either end. Start on a river hex to erase instead.</p>
             <p className="small">Each 4 claimed river hexes give Economy +1, and each 8 give Stability +1. Roads cost double in river hexes unless there's a Bridge.</p>
           </Panel>
         )}
@@ -418,7 +457,7 @@ function HexPanel({ k, hk, go, players }: { k: Kingdom; hk: string; go: (tab: 's
   const [confirm, setConfirm] = useState<'abandon' | 'lose' | null>(null);
   const ids = { name: useId('hx'), terrain: useId('hx'), special: useId('hx'), notes: useId('hx'), town: useId('hx') };
   const claimCheck = checkClaim(k, m, hk);
-  const edit = (label: string, fn: (h: Hex) => void) => update(label, (d) => { fn(editHex(d.map!, hk)); syncFromMap(d); });
+  const edit = (label: string, fn: (h: Hex) => void) => update(label, (d) => { fn(editHex(d.map!, hk)); reconcileRivers(d.map!); syncFromMap(d); });
   const secret = players && h.status === 'unexplored';
 
   return (
@@ -558,7 +597,10 @@ function HexPanel({ k, hk, go, players }: { k: Kingdom; hk: string; go: (tab: 's
             </select>
           </label>
         </div>
-        <label className="check"><input type="checkbox" checked={!!h.river} onChange={(e) => edit('Toggle river', (x) => { x.river = e.target.checked; })} /> River runs through this hex</label>
+        <label className="check"><input type="checkbox" checked={!!h.river} onChange={(e) => {
+          const on = e.target.checked;
+          update(on ? 'Add river' : 'Remove river', (d) => { if (on) attachRiver(d.map!, hk); else eraseRiver(d.map!, hk); syncFromMap(d); });
+        }} /> River runs through this hex</label>
         <label className="field" htmlFor={ids.notes}>GM notes
           <textarea id={ids.notes} rows={2} value={h.notes ?? ''} onChange={(e) => edit('Edit notes', (x) => { x.notes = e.target.value || undefined; })} />
         </label>

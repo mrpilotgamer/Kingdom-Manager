@@ -245,7 +245,8 @@ table.list td { padding: 8px; border-bottom: 1px solid var(--line); vertical-ali
 .hx-claimed { fill: var(--accent); opacity: 0.12; pointer-events: none; }
 .hx-selected { fill: none; stroke: var(--ink); stroke-width: 3; }
 .hexmap .border { stroke: var(--border); stroke-width: 3.5; stroke-linecap: round; }
-.hexmap .river { stroke: var(--river); stroke-width: 4; stroke-linecap: round; }
+.hexmap .river { stroke: var(--river); stroke-width: 4; stroke-linecap: round; fill: none; }
+.hexmap .river-dot { fill: var(--river); }
 .hexmap .canal { stroke: var(--river); stroke-width: 2.5; stroke-dasharray: 5 3; }
 .hexmap .road { stroke: var(--road); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 6 3; }
 .hexmap .highway { stroke: var(--road); stroke-width: 4; stroke-linecap: round; }
