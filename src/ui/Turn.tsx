@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { log, loseHex } from '../engine/actions';
 import { activeArmies, armyUpkeepTotal, payArmies, rally } from '../engine/armies';
+import { fillSlots } from '../engine/magicItems';
 import { computeStats } from '../engine/stats';
 import {
   collectTaxes, deposit, endTurn, eventChance, modifyUnrest, payConsumption, PHASES, resolveStability, rollEvents,
@@ -83,8 +84,12 @@ function Upkeep({ k, go }: { k: Kingdom; go: (t: Tab) => void }) {
         <div><button className="btn primary" onClick={() => update('Pay Consumption', payConsumption)}>Pay {st.consumption} BP</button></div>
       </Step>
       <ArmyUpkeep k={k} go={go} n={3} />
-      <Step n={3 + a} title="Fill vacant magic item slots">
-        <p className="small muted">Roll d% for each district with an open slot: 51–100 fills it with an item up to the settlement's base value. Track items at the table for now.</p>
+      <Step n={3 + a} title="Fill vacant magic item slots" done={done['upkeep.items']}>
+        <p className="small">Each district with an open slot rolls d%: on 51–100 one of its open slots gets an item no pricier than the settlement’s base value.</p>
+        <div className="row">
+          <button className="btn primary" onClick={() => update('Fill magic item slots', (d) => { fillSlots(d); })}>Roll for open slots</button>
+          <button className="btn ghost" onClick={() => go('settlements')}>See what’s for sale</button>
+        </div>
       </Step>
       <Step n={4 + a} title="Modify Unrest" done={done['upkeep.unrest']}>
         <p className="small">
@@ -184,7 +189,10 @@ function Income({ k }: { k: Kingdom }) {
           })}>Sell for {itemBP} BP</button>
         </div>
       </Step>
-      <Step n={4} title="Collect taxes" done={done['income.taxes']}>
+      <Step n={4} title="Sell magic items to travelers (optional)">
+        <p className="small">To clear a settlement’s unwanted item so a new one can appear, attempt an Economy check per item (open the item on the Settlements tab). Each check after the first this turn lowers Economy by 1. The money goes to the shop, not the Treasury.</p>
+      </Step>
+      <Step n={5} title="Collect taxes" done={done['income.taxes']}>
         {st.canCollectTaxes ? (
           <>
             <p className="small">On a success, gain the check result ÷ 3 in BP{st.incomeBonus ? `, plus ${st.incomeBonus} BP from Mines, Quarries, and Sawmills` : ''}. A failure collects nothing from taxes.</p>

@@ -4,6 +4,7 @@ import { ATTR_LABEL, ATTRS, type Attr } from '../rules/kingdom';
 import type { ActiveEvent, Kingdom, Phase } from '../state/types';
 import { uid } from '../state/util';
 import { applyOnRoll, hasActions } from './eventEffects';
+import { expireExtraSlots } from './magicItems';
 import { changeUnrest, log } from './actions';
 import { defaultRng, die, type Rng } from './dice';
 import { computeStats } from './stats';
@@ -270,6 +271,7 @@ export function rollEvents(k: Kingdom, rng: Rng = defaultRng) {
   k.checkMods = (k.checkMods ?? []).filter((m) => m.turn >= k.turn);
   k.settlementAdjustments = (k.settlementAdjustments ?? []).filter((a) => !(a.until === 'next-event' && (a.turn ?? 0) < k.turn));
   if (count() < before) log(k, 'Effects lasting until this Event phase have ended.');
+  expireExtraSlots(k);
   const chance = eventChance(k);
   const roll = die(100, rng);
   const occurs = roll <= chance;

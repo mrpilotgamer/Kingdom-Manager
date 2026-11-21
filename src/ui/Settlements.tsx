@@ -12,6 +12,7 @@ import { TERRAIN, type Terrain } from '../rules/kingdom';
 import { update } from '../state/store';
 import type { District, Kingdom, Lot, PlacedBuilding, Settlement, Side } from '../state/types';
 import { Panel, useId } from './common';
+import { MagicItemsPanel } from './MagicItems';
 import { SettlementModsPanel } from './SettlementMods';
 
 const pos = (i: number) => i + Math.floor(i / 2) + 1;
@@ -226,13 +227,7 @@ function SettlementView({ k, s, d, setDId }: { k: Kingdom; s: Settlement; d: Dis
             <Palette k={k} s={s} onPick={(t) => startPlace(t)} />
           )}
           <SettlementModsPanel k={k} s={s} />
-          {ss.magicItems.length > 0 && (
-            <Panel title="Magic item slots">
-              <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>
-                {ss.magicItems.map((m, i) => <li key={i}>{m}</li>)}
-              </ul>
-            </Panel>
-          )}
+          <MagicItemsPanel k={k} s={s} />
         </div>
       </div>
       <DistrictControls k={k} s={s} d={d} />

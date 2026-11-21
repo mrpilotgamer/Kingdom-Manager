@@ -16,6 +16,16 @@ export interface PlacedBuilding {
   discountedBy?: string;
   /** Damaged by an event: gives no benefits until half its cost is paid to repair it. */
   damaged?: boolean;
+  /** Magic items for sale, by the building's slot index (null = open slot). */
+  items?: (MagicItem | null)[];
+}
+
+export interface MagicItem {
+  id: string;
+  name: string;
+  price: number;
+  kind: string;
+  grade: 'minor' | 'medium' | 'major';
 }
 
 export interface District {
@@ -35,6 +45,11 @@ export interface Settlement {
   name: string;
   terrain: Terrain;
   districts: District[];
+  /** Temporary magic item slots (Unexpected Find). */
+  extraSlots?: {
+    id: string; districtId: string; grade: 'minor' | 'medium' | 'major'; kinds: ('potion' | 'scroll' | 'wand' | 'ring' | 'wondrous' | 'armor' | 'shield' | 'weapon' | 'staff' | 'any')[];
+    label: string; item?: MagicItem; autoFill?: boolean; untilTurn?: number;
+  }[];
   /** Map hex this settlement sits in ("col,row"), when the kingdom uses the hex map. */
   hexKey?: string;
 }
@@ -258,7 +273,7 @@ export interface Kingdom {
   nextUpkeep?: { multiplier: number; add: number; labels: string[] };
   turnState: TurnState;
   eventLastTurn: boolean;
-  settings: { districtsAddConsumption: boolean; diagonalAdjacency: boolean; setupMode: boolean; permanentEventEffects?: boolean; settlementSizeMods?: boolean };
+  settings: { districtsAddConsumption: boolean; diagonalAdjacency: boolean; setupMode: boolean; permanentEventEffects?: boolean; settlementSizeMods?: boolean; itemSources?: 'core' | 'all' };
   createdAt: number;
   updatedAt: number;
 }

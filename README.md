@@ -39,11 +39,17 @@ does the math, and walks your group through each kingdom turn.
   phase: tactics, ranged, then melee with the strategy track, battlefield conditions, fortifications and siege engines,
   routs and parting shots, withdrawing, and the aftermath (kingdom losses, commander fates, victory checks for new
   tactics and boons, XP). The Upkeep phase pays armies, rallies routed ones, and heals armies at rest.
+- **Settlement magic items**: every building's item slots (e.g. "1 minor potion or wondrous item") are tracked per
+  settlement. Each Upkeep phase rolls d% per district to stock an open slot with a real item no pricier than the base
+  value: potions, scrolls, and wands priced by the Core Rulebook formulas, generic +1 to +5 arms and armor, and named
+  wondrous items, rings, and staves (Core Rulebook by default, or every Pathfinder book). Items can be bought by PCs,
+  bought with BP (a leader's own purchase counts as a withdrawal), or sold to travelers with an Economy check.
+  Remarkable Treasure and Unexpected Find events stock slots too.
 - **Chronicle and Undo**: every change is logged, and the last 40 changes can be undone.
 - **Saving**: everything is stored in your browser. Export or import a kingdom as JSON to back it up or move it.
 - **Setup mode**: enter a kingdom you're already running, without paying for or logging every past building.
 
-Not in this version: magic item slot rolls, and the optional rules (Fame/Infamy actions,
+Not in this version: the optional rules (Fame/Infamy actions,
 trade and diplomatic edicts, vassalage).
 
 ## Rules notes
@@ -57,6 +63,8 @@ trade and diplomatic edicts, vassalage).
 - **Event durations**: the rules don't say how long changes like "Stability decreases by 2" last. By default they last
   while a continuous event does (refreshed each turn, not stacked) or until the next Event phase for one-time events.
   Options can make them permanent instead.
+- **Item grades**: named items are sorted into minor (up to 5,000 gp), medium (up to 40,000 gp), and major by price,
+  approximating the Core Rulebook's grade tables. "Any item" slots use weights close to its random magic item table.
 - **Slavers**: the printed text says failing lowers Unrest; the app treats that as a typo and raises it.
 
 ## Development
@@ -71,8 +79,9 @@ npm run build:single   # one self-contained HTML file in dist-single/
 
 Code layout:
 
-- `src/rules/`: game data (buildings, edicts, roles, terrain, events). `buildings.json` and `events.json` are generated
-  from Archives of Nethys pages by `scripts/parse-aon.py`.
+- `src/rules/`: game data (buildings, edicts, roles, terrain, events, mass combat, magic items). `buildings.json` and
+  `events.json` are generated from Archives of Nethys pages by `scripts/parse-aon.py`; `magicItems.json` (item names,
+  prices, and spell lists) by `scripts/parse-aon-items.py`.
 - `src/engine/`: pure rules logic (stats, grid placement, hex map, costs, turn steps), covered by the `*.test.ts` files.
 - `src/state/`: the kingdom data model, browser storage, and undo.
 - `src/ui/`: React screens.

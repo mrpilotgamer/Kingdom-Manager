@@ -11,6 +11,7 @@ import { changeUnrest, log, loseHex } from './actions';
 import { defaultRng, die, explodingD6, type Rng } from './dice';
 import { getHex, neighborKeys } from './map';
 import { leaderFilled, settlementModifiers } from './stats';
+import { remarkableTreasure, unexpectedFind } from './magicItems';
 import { kingdomCheck, resolveEvent, type CheckResult } from './turn';
 
 // ---------- context handed to each event's rules ----------
@@ -473,8 +474,25 @@ export const RESOLVERS: Record<string, Resolver> = {
   },
   'outstanding-success': { onRoll: (x) => { x.fame(1); x.treasury(x.roll('1d6')); x.unrest(-2); x.checkMod('economy', 4); } },
   pilgrimage: { onRoll: (x) => x.note('Pilgrims hold a religious festival here at no cost to you') },
-  'remarkable-treasure': { onRoll: (x) => x.note('Fill an open magic item slot with a better item than normal (base value counts as 50% higher)') },
-  'unexpected-find': { onRoll: (x) => x.note('A temporary minor (01–70) or medium (71–100) magic item slot appears and fills next Upkeep') },
+  'remarkable-treasure': {
+    onRoll: (x) => {
+      const s = x.settlement();
+      const it = s ? remarkableTreasure(x.k, s, x.rng) : null;
+      if (it) x.lines.push(`${it.name} (${it.price.toLocaleString()} gp) is now for sale in ${s!.name}`);
+      else if (s) {
+        unexpectedFind(x.k, s, x.rng);
+        x.lines.push(`No open slot in ${s.name}, so it counts as an Unexpected Find: a temporary slot that fills next Upkeep`);
+      }
+    },
+  },
+  'unexpected-find': {
+    onRoll: (x) => {
+      const s = x.settlement();
+      if (!s) return;
+      const grade = unexpectedFind(x.k, s, x.rng);
+      x.lines.push(`A temporary ${grade} magic item slot opens in ${s.name}; it fills next Upkeep and is gone by the next Event phase`);
+    },
+  },
   'visiting-celebrity': { onRoll: (x) => { x.fame(1); x.treasury(x.roll('1d6!')); } },
   'wealthy-immigrant': {
     onRoll: (x) => { (x.ev.state ??= {}).offer = x.roll('1d100') <= 75 ? 'Mansion' : 'Noble Villa'; x.lines.push(`Offers to build a ${x.ev.state.offer}`); },

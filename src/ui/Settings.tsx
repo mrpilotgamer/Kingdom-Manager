@@ -72,6 +72,10 @@ export function Settings({ k, onNew }: { k: Kingdom; onNew: () => void }) {
           <span><strong>Event changes are permanent</strong> <span className="small muted">— the rules don't say how long changes like "Stability decreases by 2" last. Off: they last while a continuous event does, or until the next Event phase. On: they stay until you remove them.</span></span>
         </label>
         <label className="check">
+          <input type="checkbox" checked={k.settings.itemSources === 'all'} onChange={(e) => update('Change item sources', (d) => { d.settings.itemSources = e.target.checked ? 'all' : 'core'; })} />
+          <span><strong>Magic items from every Pathfinder book</strong> <span className="small muted">— off: wondrous items, rings, and staves come from the Core Rulebook. Potions, scrolls, and wands use spells from all books either way.</span></span>
+        </label>
+        <label className="check">
           <input type="checkbox" checked={k.settings.diagonalAdjacency} onChange={(e) => update('Toggle diagonal adjacency', (d) => { d.settings.diagonalAdjacency = e.target.checked; })} />
           <span><strong>Diagonal lots count as adjacent</strong> <span className="small muted">— the rules don't say; many GMs allow it.</span></span>
         </label>

@@ -298,3 +298,10 @@ table.list td { padding: 8px; border-bottom: 1px solid var(--line); vertical-ali
 .battle-army { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: var(--bg); }
 .battle-army.routed, .battle-army.defeated, .battle-army.withdrawn { opacity: 0.6; }
 .battle-log ul { margin: 4px 0 0; padding-left: 18px; }
+
+/* Magic items */
+.item-row { border-bottom: 1px dashed var(--line); padding: 6px 0; display: flex; flex-direction: column; gap: 6px; }
+.item-head { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; border: 0; background: none; padding: 0; text-align: left; cursor: pointer; width: 100%; }
+.item-head:hover .item-name strong { text-decoration: underline; }
+.item-slot { text-transform: none; }
+.item-name { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
