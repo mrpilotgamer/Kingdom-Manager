@@ -230,8 +230,7 @@ function EventPhase({ k }: { k: Kingdom }) {
           {rolled.length > 0 && <div className="row">{rolled.map((e, i) => <RolledLine key={i} e={e} />)}</div>}
           {fresh.map((e) => <OngoingEventCard key={e.id} k={k} e={e} eventPhase />)}
           <p className="callout info">
-            Effects are applied automatically. Settlement modifiers (Corruption, Crime, Law, Lore, Productivity, Society)
-            and Infamy aren't tracked yet, so they're listed in the Chronicle as reminders.
+            Effects are applied automatically and recorded in the Chronicle. Anything only the GM can decide is listed as a note.
           </p>
         </div>
       )}

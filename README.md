@@ -28,8 +28,11 @@ does the math, and walks your group through each kingdom turn.
 - **Automated events**: every rulebook event has its own options and checks (one, two, or one per threatened lot), and
   applies its results: Unrest, Treasury, Fame, timed attribute changes, check bonuses, next-Upkeep Consumption,
   damaged or destroyed buildings, a leader lost to assassins, and the citizens' demands. Penalties for Tenements,
-  Waterfronts, Piers, and similar buildings are counted for you. Settlement modifiers and Infamy aren't tracked yet and
-  are logged as reminders.
+  Waterfronts, Piers, and similar buildings are counted for you, and events change settlement modifiers and Infamy.
+- **Settlement modifiers, Fame, and Infamy**: each settlement's Corruption, Crime, Law, Lore, Productivity, and Society
+  come from its buildings, the government type, and its size (Table 4–14, optional), with a breakdown of every source.
+  Kingdom-wide values follow Expanding Settlement Modifiers. Fame and Infamy include starting values, famous buildings,
+  settlement modifiers (each 10 points), events, and the Ruler's choice at Size 11, 26, 51, 101, and 201.
 - **Chronicle and Undo**: every change is logged, and the last 40 changes can be undone.
 - **Saving**: everything is stored in your browser. Export or import a kingdom as JSON to back it up or move it.
 - **Setup mode**: enter a kingdom you're already running, without paying for or logging every past building.

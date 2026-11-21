@@ -5,6 +5,7 @@ import {
 } from '../rules/kingdom';
 import { ROLES, type RoleId } from '../rules/leadership';
 import type { Kingdom, Settlement } from '../state/types';
+import { GOVERNMENTS, RENOWN_SIZES, SETTLEMENT_STATS, sizeModifier, type SettlementStat } from '../rules/settlement';
 
 export interface Line { label: string; value: number }
 export interface KingdomStats {
@@ -23,6 +24,8 @@ export interface KingdomStats {
   holidayBlocked: boolean;
   /** Unrest gained each Upkeep from vacant roles. */
   vacancyUnrest: number;
+  infamy: number;
+  renown: { fame: Line[]; infamy: Line[] };
   limits: TurnLimits;
   rulerAttrCount: number;
 }
@@ -153,6 +156,19 @@ export function computeStats(k: Kingdom): KingdomStats {
   const total = (key: keyof typeof bd) => bd[key].reduce((n, l) => n + l.value, 0);
   const fameFromBuildings = k.settlements.reduce(
     (n, s) => n + allBuildings(s).reduce((m, id) => m + (BUILDING_BY_ID[id]?.fame ?? 0), 0), 0);
+  const totals = SETTLEMENT_STATS.reduce((o, st) => ({ ...o, [st]: 0 }), {} as Record<SettlementStat, number>);
+  for (const s of k.settlements) {
+    const v = settlementModifiers(k, s).values;
+    for (const st of SETTLEMENT_STATS) totals[st] += v[st];
+  }
+  const fameLines: Line[] = [], infamyLines: Line[] = [];
+  if (k.fame) fameLines.push({ label: 'Starting value and events', value: k.fame });
+  if (fameFromBuildings) fameLines.push({ label: 'Famous buildings', value: fameFromBuildings });
+  const loreSociety = Math.floor(Math.max(0, totals.lore + totals.society) / 10);
+  if (loreSociety) fameLines.push({ label: `Settlements’ Lore + Society (${totals.lore + totals.society}) ÷ 10`, value: loreSociety });
+  if (k.infamy) infamyLines.push({ label: 'Starting value and events', value: k.infamy });
+  const corruptCrime = Math.floor(Math.max(0, totals.corruption + totals.crime) / 10);
+  if (corruptCrime) infamyLines.push({ label: `Settlements’ Corruption + Crime (${totals.corruption + totals.crime}) ÷ 10`, value: corruptCrime });
 
   return {
     economy: total('economy'),
@@ -162,7 +178,9 @@ export function computeStats(k: Kingdom): KingdomStats {
     controlDC: 20 + k.size + districts,
     districts,
     incomeBonus: f('mine') + f('quarry') + f('sawmill'),
-    fame: k.fame + fameFromBuildings,
+    fame: Math.max(0, fameLines.reduce((n, l) => n + l.value, 0)),
+    infamy: Math.max(0, infamyLines.reduce((n, l) => n + l.value, 0)),
+    renown: { fame: fameLines, infamy: infamyLines },
     breakdown: bd,
     vacancies,
     rulerCovered,
@@ -208,3 +226,77 @@ export function settlementStats(s: Settlement): SettlementStats {
 }
 
 export const fmt = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : '0');
+
+// ---------- settlement modifiers ----------
+export type SettlementMods = { values: Record<SettlementStat, number>; breakdown: Record<SettlementStat, Line[]> };
+
+function blankMods(): SettlementMods {
+  const values = {} as Record<SettlementStat, number>, breakdown = {} as Record<SettlementStat, Line[]>;
+  for (const st of SETTLEMENT_STATS) { values[st] = 0; breakdown[st] = []; }
+  return { values, breakdown };
+}
+function addMods(r: SettlementMods, label: string, mods: Partial<Record<SettlementStat, number>>) {
+  for (const st of SETTLEMENT_STATS) {
+    const v = mods[st];
+    if (!v) continue;
+    r.values[st] += v;
+    const line = r.breakdown[st].find((l) => l.label === label);
+    if (line) line.value += v;
+    else r.breakdown[st].push({ label, value: v });
+  }
+}
+
+/** Corruption, Crime, Law, Lore, Productivity, and Society for one settlement, with where each comes from. */
+export function settlementModifiers(k: Kingdom, s: Settlement): SettlementMods {
+  const r = blankMods();
+  for (const d of s.districts) {
+    for (const b of d.buildings) {
+      if (b.damaged) continue;
+      const def = BUILDING_BY_ID[b.type];
+      if (def?.settlementMods) addMods(r, def.name, def.settlementMods);
+    }
+    for (const id of d.improvements) {
+      const def = BUILDING_BY_ID[id];
+      if (def?.settlementMods) addMods(r, def.name, def.settlementMods);
+    }
+    for (const [id, n] of Object.entries(d.addons)) {
+      const def = BUILDING_BY_ID[id];
+      if (def?.settlementMods && n) for (let i = 0; i < n; i++) addMods(r, def.name, def.settlementMods);
+    }
+  }
+  const gov = GOVERNMENTS[k.government ?? 'autocracy'];
+  addMods(r, `Government: ${gov.label}`, gov.mods);
+  if (k.settings.settlementSizeMods !== false) {
+    const lots = settlementStats(s).lots;
+    const size = sizeModifier(lots, s.districts.length);
+    if (size.mod) addMods(r, `Size: ${size.label} (${lots} lot${lots === 1 ? '' : 's'})`, Object.fromEntries(SETTLEMENT_STATS.map((st) => [st, size.mod])));
+  }
+  for (const a of k.settlementAdjustments ?? []) if (a.settlementId === s.id) addMods(r, a.label, a.mods);
+  return r;
+}
+
+/** Kingdom-wide settlement modifiers ("Expanding Settlement Modifiers"): all settlements ÷ 10, plus alignment. */
+export function kingdomSettlementModifiers(k: Kingdom): SettlementMods {
+  const r = blankMods();
+  const sum = SETTLEMENT_STATS.reduce((o, st) => ({ ...o, [st]: 0 }), {} as Record<SettlementStat, number>);
+  for (const s of k.settlements) {
+    const v = settlementModifiers(k, s).values;
+    for (const st of SETTLEMENT_STATS) sum[st] += v[st];
+  }
+  addMods(r, 'All settlements ÷ 10', Object.fromEntries(SETTLEMENT_STATS.map((st) => [st, Math.trunc(sum[st] / 10)])));
+  const a = k.alignment;
+  const al: Partial<Record<SettlementStat, number>> = {};
+  if (a.law === 'chaotic') al.crime = 1;
+  if (a.law === 'lawful') al.law = 1;
+  if (a.moral === 'evil') al.corruption = 1;
+  if (a.moral === 'good') al.society = 1;
+  al.lore = (a.law === 'neutral' ? 1 : 0) + (a.moral === 'neutral' ? 1 : 0);
+  addMods(r, `Alignment (${alignmentLabel(a)})`, al);
+  for (const adj of k.settlementAdjustments ?? []) if (!adj.settlementId) addMods(r, adj.label, adj.mods);
+  return r;
+}
+
+/** Size milestones reached that haven't yet given their +1 Fame or Infamy. */
+export function renownDue(k: Kingdom) {
+  return RENOWN_SIZES.filter((n) => k.size >= n && !(k.renownAwarded ?? []).includes(n));
+}

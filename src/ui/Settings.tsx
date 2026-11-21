@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { fmt } from '../engine/stats';
 import { ALIGNMENTS } from '../rules/kingdom';
+import { GOVERNMENTS, STAT_LABEL, type Government, type SettlementStat } from '../rules/settlement';
 import { deleteKingdom, exportKingdom, importKingdom, update } from '../state/store';
 import type { Kingdom } from '../state/types';
 import { Panel, useId } from './common';
@@ -8,7 +10,7 @@ export function Settings({ k, onNew }: { k: Kingdom; onNew: () => void }) {
   const [text, setText] = useState('');
   const [msg, setMsg] = useState('');
   const [confirm, setConfirm] = useState(false);
-  const ids = { n: useId('set'), a: useId('set'), imp: useId('set'), file: useId('set') };
+  const ids = { n: useId('set'), a: useId('set'), imp: useId('set'), file: useId('set'), gov: useId('set') };
   const json = exportKingdom(k);
   const alignIdx = ALIGNMENTS.findIndex((a) => a.value.law === k.alignment.law && a.value.moral === k.alignment.moral);
 
@@ -44,6 +46,14 @@ export function Settings({ k, onNew }: { k: Kingdom; onNew: () => void }) {
             {ALIGNMENTS.map((a, i) => <option key={a.abbr} value={i}>{a.label}</option>)}
           </select>
         </label>
+        <label className="field" htmlFor={ids.gov}>Government
+          <select id={ids.gov} value={k.government ?? 'autocracy'} onChange={(e) => update('Change government', (d) => { d.government = e.target.value as Government; })}>
+            {Object.entries(GOVERNMENTS).map(([id, g]) => (
+              <option key={id} value={id}>{g.label}{Object.keys(g.mods).length ? ` — ${Object.entries(g.mods).map(([st, v]) => `${STAT_LABEL[st as SettlementStat]} ${fmt(v!)}`).join(', ')}` : ''}</option>
+            ))}
+          </select>
+        </label>
+        <p className="small muted">{GOVERNMENTS[k.government ?? 'autocracy'].text} Its modifiers apply to every settlement.</p>
         <h3>Rules options</h3>
         <label className="check">
           <input type="checkbox" checked={k.settings.setupMode} onChange={(e) => update('Toggle setup mode', (d) => { d.settings.setupMode = e.target.checked; })} />
@@ -52,6 +62,10 @@ export function Settings({ k, onNew }: { k: Kingdom; onNew: () => void }) {
         <label className="check">
           <input type="checkbox" checked={k.settings.districtsAddConsumption} onChange={(e) => update('Toggle district Consumption', (d) => { d.settings.districtsAddConsumption = e.target.checked; })} />
           <span><strong>Each district adds 1 Consumption</strong> <span className="small muted">— as on the Ultimate Campaign kingdom sheet. Turn off if your table doesn't use it.</span></span>
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={k.settings.settlementSizeMods !== false} onChange={(e) => update('Toggle settlement size modifiers', (d) => { d.settings.settlementSizeMods = e.target.checked; })} />
+          <span><strong>Settlement size modifiers</strong> <span className="small muted">— Table 4–14: a 1-lot village gets −4 to all settlement modifiers, a small town −2, and cities +1 or more.</span></span>
         </label>
         <label className="check">
           <input type="checkbox" checked={!!k.settings.permanentEventEffects} onChange={(e) => update('Toggle permanent event effects', (d) => { d.settings.permanentEventEffects = e.target.checked; })} />

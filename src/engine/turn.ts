@@ -247,6 +247,7 @@ export function resolveEvent(k: Kingdom, id: string) {
   if (!ev) return;
   k.events = k.events!.filter((e) => e.id !== id);
   k.modifiers = k.modifiers.filter((m) => !(m.eventId === id && m.until === 'event'));
+  k.settlementAdjustments = (k.settlementAdjustments ?? []).filter((a) => !(a.eventId === id && a.until === 'event'));
   log(k, `${ev.name}${ev.location ? ` (${ev.location})` : ''} resolved after ${k.turn - ev.startedTurn + 1} turn${k.turn === ev.startedTurn ? '' : 's'}.`);
 }
 
@@ -263,10 +264,12 @@ export function rollEvents(k: Kingdom, rng: Rng = defaultRng) {
     log(k, `${e.name}${e.location ? ` (${e.location})` : ''} has ended.`);
   }
   k.events = (k.events ?? []).filter((x) => !expiring(x));
-  const before = k.modifiers.length + (k.checkMods?.length ?? 0);
+  const count = () => k.modifiers.length + (k.checkMods?.length ?? 0) + (k.settlementAdjustments?.length ?? 0);
+  const before = count();
   k.modifiers = k.modifiers.filter((m) => !(m.until === 'next-event' && (m.turn ?? 0) < k.turn));
   k.checkMods = (k.checkMods ?? []).filter((m) => m.turn >= k.turn);
-  if (k.modifiers.length + k.checkMods.length < before) log(k, 'Effects lasting until this Event phase have ended.');
+  k.settlementAdjustments = (k.settlementAdjustments ?? []).filter((a) => !(a.until === 'next-event' && (a.turn ?? 0) < k.turn));
+  if (count() < before) log(k, 'Effects lasting until this Event phase have ended.');
   const chance = eventChance(k);
   const roll = die(100, rng);
   const occurs = roll <= chance;
@@ -290,6 +293,8 @@ export function endTurn(k: Kingdom) {
   k.eventLastTurn = !!k.turnState.done['event.occurred'];
   log(k, `Turn ${k.turn} ended. Treasury ${k.treasury} BP, Unrest ${k.unrest}.`);
   k.turn += 1;
+  k.modifiers = k.modifiers.filter((m) => !(m.expiresTurn && m.expiresTurn <= k.turn));
+  k.settlementAdjustments = (k.settlementAdjustments ?? []).filter((a) => !(a.expiresTurn && a.expiresTurn <= k.turn));
   k.turnState = { phase: 'upkeep', done: {}, buildings: 0, freeHousingUsed: false, hexClaims: 0, improvements: 0, settlements: 0 };
 }
 

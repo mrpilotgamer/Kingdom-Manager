@@ -1,6 +1,7 @@
 import type { Alignment, Attr, Terrain, TerrainFeature } from '../rules/kingdom';
 import type { RoleId } from '../rules/leadership';
 import type { GenParams } from '../engine/mapgen';
+import type { Government, SettlementStat } from '../rules/settlement';
 
 export type Side = 'n' | 'e' | 's' | 'w';
 export type Lot = [row: number, col: number];
@@ -94,6 +95,22 @@ export interface Modifier {
   eventId?: string;
   /** Turn it was created. */
   turn?: number;
+  /** Ends when the kingdom reaches this turn. */
+  expiresTurn?: number;
+}
+
+/** A change to settlement modifiers (Corruption, Crime, ...) from an event or the GM. */
+export interface SettlementAdjustment {
+  id: string;
+  label: string;
+  /** Settlement it applies to; missing = the whole kingdom. */
+  settlementId?: string;
+  mods: Partial<Record<SettlementStat, number>>;
+  until?: 'event' | 'next-event';
+  eventId?: string;
+  turn?: number;
+  /** Ends when the kingdom reaches this turn (e.g. "for 1 year"). */
+  expiresTurn?: number;
 }
 
 /** A bonus or penalty on kingdom checks, from an event, until the next Event phase. */
@@ -165,6 +182,12 @@ export interface Kingdom {
   unrest: number;
   size: number;
   fame: number;
+  /** Missing on older saves (counts as 0). */
+  infamy?: number;
+  government?: Government;
+  /** Size milestones (11, 26, ...) already rewarded with Fame or Infamy. */
+  renownAwarded?: number[];
+  settlementAdjustments?: SettlementAdjustment[];
   leaders: Partial<Record<RoleId, Leader>>;
   edicts: { holiday: number; promotion: number; taxation: number };
   features: Partial<Record<TerrainFeature, number>>;
@@ -180,7 +203,7 @@ export interface Kingdom {
   nextUpkeep?: { multiplier: number; add: number; labels: string[] };
   turnState: TurnState;
   eventLastTurn: boolean;
-  settings: { districtsAddConsumption: boolean; diagonalAdjacency: boolean; setupMode: boolean; permanentEventEffects?: boolean };
+  settings: { districtsAddConsumption: boolean; diagonalAdjacency: boolean; setupMode: boolean; permanentEventEffects?: boolean; settlementSizeMods?: boolean };
   createdAt: number;
   updatedAt: number;
 }

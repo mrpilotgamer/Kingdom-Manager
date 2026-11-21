@@ -1,6 +1,7 @@
 // Building data comes from Ultimate Campaign (via Archives of Nethys), parsed by scripts/parse-aon.py.
 // This file layers structured placement rules on top of the parsed text.
 import raw from './buildings.json';
+import type { SettlementStat } from './settlement';
 
 export type BuildingKind = 'lot' | 'district' | 'border' | 'addon';
 export type Category =
@@ -29,6 +30,8 @@ export interface BuildingDef {
   settlementText?: string;
   baseValue?: number;
   defense?: number;
+  /** Corruption, Crime, Law, Lore, Productivity, Society. */
+  settlementMods?: Partial<Record<SettlementStat, number>>;
   description?: string;
   /** Must be adjacent to `count` distinct buildings from `any` (each neighbor can satisfy only one building). */
   requires?: { any: string[]; count: number };

@@ -271,3 +271,7 @@ table.list td { padding: 8px; border-bottom: 1px solid var(--line); vertical-ali
 .event-history { margin: 0; padding-left: 18px; }
 .event-actions { border-top: 1px dashed var(--line); padding-top: 10px; }
 .bldg.damaged { background-image: repeating-linear-gradient(45deg, transparent 0 6px, color-mix(in srgb, var(--danger) 30%, transparent) 6px 8px); }
+.linklike { border: 0; background: none; padding: 0; cursor: pointer; font: inherit; color: inherit; text-decoration: underline dotted; text-underline-offset: 3px; }
+.smod-row { cursor: pointer; }
+.field > .segmented { color: var(--ink); }
+.breakdown td.smod-detail { text-align: left; font-weight: 400; width: auto; padding-left: 12px; }

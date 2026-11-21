@@ -19,6 +19,11 @@
   ],
   "magicItems": "3 minor scrolls or wondrous items, 2 medium scrolls or wondrous items",
   "settlementText": "Lore +2, Productivity +1, Society +2; increase Lore bonus by 2 for questions relating to one Knowledge or Profession skill",
+  "settlementMods": {
+   "lore": 2,
+   "productivity": 1,
+   "society": 2
+  },
   "description": "An institution of higher learning."
  },
  {
@@ -52,6 +57,9 @@
   ],
   "limitText": "1 per settlement",
   "settlementText": "Crime +1",
+  "settlementMods": {
+   "crime": 1
+  },
   "description": "A large public structure for competitions and team sports."
  },
  {
@@ -92,6 +100,9 @@
   ],
   "specialText": "Defense +2",
   "settlementText": "Law +1",
+  "settlementMods": {
+   "law": 1
+  },
   "defense": 2,
   "description": "A building to house conscripts, guards, militia, soldiers, or similar military forces."
  },
@@ -110,6 +121,10 @@
   "specialText": "Base value +2,000 gp",
   "magicItems": "2 minor items, 1 medium item, 1 major item",
   "settlementText": "Corruption +2, Crime +2",
+  "settlementMods": {
+   "corruption": 2,
+   "crime": 2
+  },
   "baseValue": 2000,
   "description": "A number of shops with secret and usually illegal wares."
  },
@@ -140,6 +155,10 @@
   "loyalty": -1,
   "stability": 1,
   "settlementText": "Corruption +1, Law +1",
+  "settlementMods": {
+   "corruption": 1,
+   "law": 1
+  },
   "description": "A large warren of offices for clerks and record-keepers working for a guild or government."
  },
  {
@@ -188,6 +207,9 @@
   "specialText": "Halves Consumption increase for Promotion edicts",
   "magicItems": "3 minor potions or wondrous items, 2 medium potions or wondrous items",
   "settlementText": "Law +2",
+  "settlementMods": {
+   "law": 2
+  },
   "description": "The focal point of the settlement's spiritual leadership."
  },
  {
@@ -221,6 +243,10 @@
   "unrest": 1,
   "limitText": "Adjacent to 1 House",
   "settlementText": "Corruption +1, Crime +1",
+  "settlementMods": {
+   "corruption": 1,
+   "crime": 1
+  },
   "description": "An establishment for dancing, drinking, carousing, and holding celebrations."
  },
  {
@@ -261,6 +287,11 @@
   "stability": -1,
   "specialText": "Increase the value of trade routes (see Trade Edicts by 5% (maximum 100%)",
   "settlementText": "Crime +1, Lore +1, Society +2",
+  "settlementMods": {
+   "crime": 1,
+   "lore": 1,
+   "society": 2
+  },
   "description": "An area with many foreigners, as well as shops and services catering to them."
  },
  {
@@ -277,6 +308,9 @@
   "limitText": "Adjacent to water district border",
   "specialText": "Increase the Economy and BP earned per turn by 1 for 1 Mine connected to this settlement by a river or Road",
   "settlementText": "Productivity +1",
+  "settlementMods": {
+   "productivity": 1
+  },
   "description": "Processes ore and refines it into finished metal."
  },
  {
@@ -332,6 +366,10 @@
   ],
   "specialText": "Base value +1,000 gp",
   "settlementText": "Law +1, Productivity +2",
+  "settlementMods": {
+   "law": 1,
+   "productivity": 2
+  },
   "baseValue": 1000,
   "description": "The headquarters for a guild or similar organization."
  },
@@ -355,6 +393,10 @@
   "stability": 2,
   "specialText": "Increase Stability by 2 during plague events",
   "settlementText": "Lore +1, Productivity +2",
+  "settlementMods": {
+   "lore": 1,
+   "productivity": 2
+  },
   "description": "A building devoted to healing the sick."
  },
  {
@@ -379,6 +421,9 @@
   "limitText": "Adjacent to 1 House",
   "specialText": "Base value +500 gp",
   "settlementText": "Society +1",
+  "settlementMods": {
+   "society": 1
+  },
   "baseValue": 500,
   "description": "A place for visitors to rest."
  },
@@ -391,6 +436,10 @@
   "stability": 2,
   "unrest": -2,
   "settlementText": "Crime –1, Law +1",
+  "settlementMods": {
+   "crime": -1,
+   "law": 1
+  },
   "description": "A fortified structure for confining criminals or dangerous monsters."
  },
  {
@@ -404,6 +453,9 @@
    "academy"
   ],
   "settlementText": "Lore +1",
+  "settlementMods": {
+   "lore": 1
+  },
   "description": "A large building containing an archive of books."
  },
  {
@@ -450,6 +502,10 @@
   ],
   "magicItems": "3 minor potions, scrolls, or wondrous items; 1 medium potion, scroll, or wondrous item",
   "settlementText": "Lore +2, Society +1; increase Lore bonus by 2 for questions relating to Knowledge (arcana)",
+  "settlementMods": {
+   "lore": 2,
+   "society": 1
+  },
   "description": "An institution for training students in spellcasting, magic item crafting, and various arcane arts."
  },
  {
@@ -460,6 +516,9 @@
   "limitText": "Settlement must have a Cathedral, Magic Shop, Magical Academy, or Temple",
   "specialText": "Can share a lot with any building or improvement",
   "settlementText": "Crime –1",
+  "settlementMods": {
+   "crime": -1
+  },
   "description": "Continual flame lamps that illuminate the lot."
  },
  {
@@ -472,6 +531,10 @@
    "noble-villa"
   ],
   "settlementText": "Law +1, Society +1",
+  "settlementMods": {
+   "law": 1,
+   "society": 1
+  },
   "description": "A single huge manor housing a rich family and its servants."
  },
  {
@@ -520,6 +583,10 @@
   "specialText": "Armies and commanders recruited at the settlement gain one bonus tactic (see Army Tactics)",
   "magicItems": "1 minor armor, shield, or weapon; 1 medium armor, shield, or weapon",
   "settlementText": "Law +1, Lore +1",
+  "settlementMods": {
+   "law": 1,
+   "lore": 1
+  },
   "description": "An institution dedicated to the study of war and the training of elite soldiers and officers."
  },
  {
@@ -532,6 +599,9 @@
   "limitText": "Adjacent to water district border",
   "specialText": "With GM approval, you can construct a windmill at the same cost without the water district border requirement",
   "settlementText": "Productivity +1",
+  "settlementMods": {
+   "productivity": 1
+  },
   "description": "A building used to cut lumber or grind grain."
  },
  {
@@ -564,6 +634,10 @@
   "lots": 2,
   "stability": 1,
   "settlementText": "Law +1, Lore +1",
+  "settlementMods": {
+   "law": 1,
+   "lore": 1
+  },
   "description": "A cloister for meditation, study, and the pursuit of various other scholarly paths."
  },
  {
@@ -584,6 +658,10 @@
   "loyalty": 1,
   "fame": 1,
   "settlementText": "Lore +2, Society +1; increase Lore bonus by 2 for questions relating to Knowledge (history); apply Lore bonus on Appraise checks regarding art objects",
+  "settlementMods": {
+   "lore": 2,
+   "society": 1
+  },
   "description": "A place to display art and artifacts both modern and historical. The GM may allow the kingdom leaders to display a valuable item (such as a magic item or bejeweled statue) in the museum, increasing Fame during this display by 1 for every 10,000 gp of the item's price (maximum +5 Fame), and by an additional 1 if the item is significant to the kingdom's history."
  },
  {
@@ -604,6 +682,9 @@
    "mansion"
   ],
   "settlementText": "Society +1",
+  "settlementMods": {
+   "society": 1
+  },
   "description": "A sprawling manor with luxurious grounds that houses a noble's family and staff."
  },
  {
@@ -614,6 +695,9 @@
   "stability": 1,
   "magicItems": "1 minor scroll or wondrous item",
   "settlementText": "Lore +2",
+  "settlementMods": {
+   "lore": 2
+  },
   "description": "A dome or tower with optical devices for viewing the heavens."
  },
  {
@@ -641,6 +725,9 @@
   ],
   "specialText": "Base value +1,000 gp; you may make two special edicts per turn, but take a –2 penalty on kingdom checks associated with each special edict",
   "settlementText": "Law +2",
+  "settlementMods": {
+   "law": 2
+  },
   "baseValue": 1000,
   "description": "A grand edifice and walled grounds demonstrating one's wealth, power, and authority to the world."
  },
@@ -662,6 +749,9 @@
   "stability": 1,
   "limitText": "1 per district",
   "settlementText": "Productivity +2",
+  "settlementMods": {
+   "productivity": 2
+  },
   "description": "Brick or stone pavement that speeds transportation."
  },
  {
@@ -677,6 +767,9 @@
   "limitText": "Adjacent to water district border",
   "specialText": "Base value +1,000 gp",
   "settlementText": "Crime +1",
+  "settlementMods": {
+   "crime": 1
+  },
   "baseValue": 1000,
   "description": "Warehouses and workshops for docking ships and handling cargo and passengers."
  },
@@ -693,6 +786,10 @@
   ],
   "limitText": "1 per district",
   "settlementText": "Crime +1, Productivity +1",
+  "settlementMods": {
+   "crime": 1,
+   "productivity": 1
+  },
   "description": "An underground sanitation system that keeps the settlement clean, though it may become home to criminals and monsters."
  },
  {
@@ -708,6 +805,9 @@
   "limitText": "Adjacent to 1 House or Mansion",
   "specialText": "Base value +500 gp",
   "settlementText": "Productivity +1",
+  "settlementMods": {
+   "productivity": 1
+  },
   "baseValue": 500,
   "description": "A general store."
  },
@@ -758,6 +858,9 @@
   ],
   "specialText": "Farms in this hex or adjacent hexes reduce Consumption by 3 instead of 2",
   "settlementText": "Productivity +1",
+  "settlementMods": {
+   "productivity": 1
+  },
   "description": "Barns and pens that store herd animals and prepare them for nearby slaughterhouses."
  },
  {
@@ -769,6 +872,9 @@
   "stability": 1,
   "limitText": "Cannot be adjacent to House, Mansion, Noble Villa, or Tenement",
   "settlementText": "Society –1",
+  "settlementMods": {
+   "society": -1
+  },
   "description": "A structure that prepares hides and leather."
  },
  {
@@ -781,6 +887,9 @@
   "limitText": "Adjacent to 1 House or Mansion",
   "specialText": "Base value +500 gp",
   "settlementText": "Corruption +1",
+  "settlementMods": {
+   "corruption": 1
+  },
   "baseValue": 500,
   "description": "An eating or drinking establishment."
  },
@@ -850,6 +959,9 @@
    "watchtower"
   ],
   "settlementText": "Law +1",
+  "settlementMods": {
+   "law": 1
+  },
   "description": "A public venue for town meetings, repository for town records, and offices for minor bureaucrats."
  },
  {
@@ -865,6 +977,9 @@
   "limitText": "Adjacent to 1 House",
   "specialText": "Base value +500 gp",
   "settlementText": "Productivity +1",
+  "settlementMods": {
+   "productivity": 1
+  },
   "baseValue": 500,
   "description": "A shop front for a tradesperson, such as a baker, butcher, candle maker, cobbler, rope maker, or wainwright."
  },
@@ -889,6 +1004,10 @@
   ],
   "magicItems": "4 minor scrolls or wondrous items, 2 medium scrolls or wondrous items",
   "settlementText": "Lore +4, Society +3; increase Lore bonus by 4 for questions relating to one Knowledge or Profession skill",
+  "settlementMods": {
+   "lore": 4,
+   "society": 3
+  },
   "description": "An institution of higher learning, focusing mainly on mundane subjects but dabbling in magical theory."
  },
  {
@@ -929,6 +1048,9 @@
   "specialText": "Base value +4,000 gp; halves Loyalty penalty for Taxation edicts",
   "magicItems": "2 minor wondrous items, 1 medium wondrous item, 1 major wondrous item",
   "settlementText": "Productivity +2",
+  "settlementMods": {
+   "productivity": 2
+  },
   "baseValue": 4000,
   "description": "A port for waterborne arrival and departure, with facilities for shipping and shipbuilding."
  },

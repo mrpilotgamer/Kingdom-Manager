@@ -2,6 +2,7 @@ import { newDistrict } from '../engine/actions';
 import { drawRiverPath, key, newMap, syncFromMap } from '../engine/map';
 import type { Generated } from '../engine/mapgen';
 import type { Alignment, Attr, Terrain } from '../rules/kingdom';
+import type { Government } from '../rules/settlement';
 import type { Hex, HexImprovement, HexMap, HexTerrain, Kingdom, Lot, PlacedBuilding } from './types';
 import { uid } from './util';
 
@@ -11,6 +12,9 @@ export interface NewKingdomInput {
   startingBP: number;
   settlementName: string;
   terrain: Terrain;
+  government?: Government;
+  /** Kingdoms start with Fame 1 or Infamy 1 (Ruler's choice). */
+  renown?: 'fame' | 'infamy';
 }
 
 const blankTurn = (): Kingdom['turnState'] => ({
@@ -32,6 +36,9 @@ export function blankKingdom(name: string, alignment: Alignment): Kingdom {
 export function createKingdom(input: NewKingdomInput, prepCost: number, generated?: Generated): Kingdom {
   const k = blankKingdom(input.name, input.alignment);
   k.treasury = input.startingBP - 1 - prepCost;
+  k.government = input.government ?? 'autocracy';
+  if (input.renown === 'infamy') k.infamy = 1;
+  else k.fame = 1;
   let map: HexMap, home: string;
   if (generated) {
     map = structuredClone(generated.map);
@@ -60,7 +67,7 @@ const pb = (type: string, ...lots: Lot[]): PlacedBuilding => ({ id: uid(), type,
 /** A filled-in example kingdom so the app shows what it does on first open. */
 export function sampleKingdom(): Kingdom {
   const k = blankKingdom('Barony of Greyford (example)', { law: 'lawful', moral: 'good' });
-  Object.assign(k, { turn: 5, treasury: 19, unrest: 1, size: 7 });
+  Object.assign(k, { turn: 5, treasury: 19, unrest: 1, size: 7, fame: 1, infamy: 0, government: 'autocracy' });
   k.edicts = { holiday: 1, promotion: 1, taxation: 1 };
   k.features = { farm: 2, road: 3, mine: 1, river: 2 };
   const L = (name: string, mod: number, attrs: Attr[] = []) => ({ name, mod, leadershipFeat: false, attrs, active: true });

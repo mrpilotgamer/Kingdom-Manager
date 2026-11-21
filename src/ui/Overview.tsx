@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { adjust } from '../engine/actions';
-import { computeStats, fmt, settlementStats } from '../engine/stats';
+import { adjust, awardRenown } from '../engine/actions';
+import { computeStats, fmt, renownDue, settlementStats } from '../engine/stats';
 import { HOLIDAY, PROMOTION, TAXATION } from '../rules/kingdom';
 import { ROLE_BY_ID } from '../rules/leadership';
 import { update } from '../state/store';
@@ -8,8 +8,9 @@ import type { Kingdom } from '../state/types';
 import { uid } from '../state/util';
 import { Panel, Signed, useId } from './common';
 import { OngoingSummary } from './Events';
+import { KingdomModsPanel } from './SettlementMods';
 
-type Key = 'economy' | 'loyalty' | 'stability' | 'consumption';
+type Key = 'economy' | 'loyalty' | 'stability' | 'consumption' | 'renown';
 
 export function Warnings({ k }: { k: Kingdom }) {
   const st = computeStats(k);
@@ -23,11 +24,38 @@ export function Warnings({ k }: { k: Kingdom }) {
     items.push({ tone: '', text: `${ROLE_BY_ID[id].name} is vacant: ${ROLE_BY_ID[id].vacancyText}` });
   for (const a of ['economy', 'loyalty', 'stability'] as const)
     if (st[a] < 0) items.push({ tone: '', text: `${a[0].toUpperCase() + a.slice(1)} is negative: +1 Unrest each Upkeep.` });
-  if (!items.length) return null;
+  const due = renownDue(k);
+  if (!items.length && !due.length) return null;
   return (
     <div className="stack">
+      {due.map((n) => (
+        <div key={n} className="callout info row">
+          <span style={{ flex: 1 }}>The kingdom reached Size {n}. The Ruler chooses: Fame +1 or Infamy +1.</span>
+          <button className="btn sm" onClick={() => update('Gain Fame', (d) => awardRenown(d, n, 'fame'))}>Fame +1</button>
+          <button className="btn sm" onClick={() => update('Gain Infamy', (d) => awardRenown(d, n, 'infamy'))}>Infamy +1</button>
+        </div>
+      ))}
       {items.map((i) => <div key={i.text} className={`callout ${i.tone}`}>{i.text}</div>)}
     </div>
+  );
+}
+
+function RenownPanel({ k }: { k: Kingdom }) {
+  const st = computeStats(k);
+  const table = (label: string, lines: { label: string; value: number }[], total: number) => (
+    <table className="breakdown">
+      <tbody>
+        {lines.map((l, i) => <tr key={i}><td>{l.label}</td><td><Signed n={l.value} /></td></tr>)}
+        <tr className="total"><td>{label}</td><td>{total}</td></tr>
+      </tbody>
+    </table>
+  );
+  return (
+    <Panel title="Fame and Infamy">
+      <p className="small muted">Each 10 points gives your citizens +1 on Diplomacy (Fame) or Intimidate (Infamy) checks to influence other kingdoms’ officials. They aren’t opposites: a kingdom can be both.</p>
+      {table('Fame', st.renown.fame, st.fame)}
+      {table('Infamy', st.renown.infamy, st.infamy)}
+    </Panel>
   );
 }
 
@@ -42,9 +70,9 @@ export function Overview({ k, openEvents }: { k: Kingdom; openEvents: () => void
     { key: 'consumption', label: 'Consumption', value: String(st.consumption), sub: 'BP paid each Upkeep' },
     { key: null, label: 'Treasury', value: `${k.treasury}`, sub: 'build points' },
     { key: null, label: 'Control DC', value: String(st.controlDC), sub: `20 + Size ${k.size} + ${st.districts} district${st.districts === 1 ? '' : 's'}` },
-    { key: null, label: 'Fame', value: String(st.fame), sub: 'from buildings and events' },
+    { key: 'renown', label: 'Fame · Infamy', value: `${st.fame} · ${st.infamy}`, sub: 'how other kingdoms see you' },
   ];
-  const lines = st.breakdown[open];
+  const lines = open === 'renown' ? [] : st.breakdown[open];
   const total = lines.reduce((n, l) => n + l.value, 0);
   return (
     <>
@@ -61,14 +89,14 @@ export function Overview({ k, openEvents }: { k: Kingdom; openEvents: () => void
         ))}
       </div>
       <div className="grid-2">
-        <Panel title={`Where ${open[0].toUpperCase() + open.slice(1)} comes from`}>
+        {open === 'renown' ? <RenownPanel k={k} /> : <Panel title={`Where ${open[0].toUpperCase() + open.slice(1)} comes from`}>
           <table className="breakdown">
             <tbody>
               {lines.map((l, i) => <tr key={i}><td>{l.label}</td><td><Signed n={l.value} /></td></tr>)}
               <tr className="total"><td>Total{open === 'consumption' && total < 0 ? ' (cannot go below 0)' : ''}</td><td>{open === 'consumption' ? st.consumption : fmt(total)}</td></tr>
             </tbody>
           </table>
-        </Panel>
+        </Panel>}
         <div className="stack" style={{ gap: 20 }}>
           <Edicts k={k} />
           <ThisTurn k={k} />
@@ -77,6 +105,9 @@ export function Overview({ k, openEvents }: { k: Kingdom; openEvents: () => void
       <div className="grid-2">
         <Settlements k={k} />
         <QuickAdjust />
+      </div>
+      <div className="grid-2">
+        <KingdomModsPanel k={k} />
       </div>
       <Modifiers k={k} />
     </>
@@ -164,13 +195,13 @@ function Settlements({ k }: { k: Kingdom }) {
 }
 
 function QuickAdjust() {
-  const [what, setWhat] = useState<'treasury' | 'unrest' | 'fame'>('treasury');
+  const [what, setWhat] = useState<'treasury' | 'unrest' | 'fame' | 'infamy'>('treasury');
   const [amount, setAmount] = useState(1);
   const [reason, setReason] = useState('');
   const ids = { what: useId('qa'), amt: useId('qa'), why: useId('qa') };
   const go = (sign: 1 | -1) => {
     const delta = sign * Math.abs(amount);
-    const label = { treasury: 'Treasury', unrest: 'Unrest', fame: 'Fame' }[what];
+    const label = { treasury: 'Treasury', unrest: 'Unrest', fame: 'Fame', infamy: 'Infamy' }[what];
     update(`Adjust ${label}`, (d) => adjust(d, what, delta, `${label} ${fmt(delta)}${reason ? `: ${reason}` : ''}.`));
     setReason('');
   };
@@ -183,6 +214,7 @@ function QuickAdjust() {
             <option value="treasury">Treasury (BP)</option>
             <option value="unrest">Unrest</option>
             <option value="fame">Fame</option>
+            <option value="infamy">Infamy</option>
           </select>
         </label>
         <label className="field" htmlFor={ids.amt}>By

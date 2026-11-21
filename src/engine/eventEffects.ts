@@ -1,16 +1,16 @@
 // Automated effects for the Ultimate Campaign kingdom events (Table 4-7 to 4-11).
 // Each event has optional effects applied when rolled, and actions the players choose between in the Event phase.
-// Settlement modifiers (Corruption, Crime, Law, Lore, Productivity, Society) and Infamy aren't tracked yet,
-// so they're written to the log as reminders.
+// Things only the GM can decide (which hex is lost, placing a gifted building) are logged as notes.
 import { building } from '../rules/buildings';
 import { ATTR_LABEL, type Attr } from '../rules/kingdom';
+import { SETTLEMENT_STATS, STAT_LABEL, type SettlementStat } from '../rules/settlement';
 import { ROLE_BY_ID, type RoleId } from '../rules/leadership';
 import type { ActiveEvent, Kingdom, Settlement } from '../state/types';
 import { uid } from '../state/util';
 import { changeUnrest, log, loseHex } from './actions';
 import { defaultRng, die, explodingD6, type Rng } from './dice';
 import { getHex, neighborKeys } from './map';
-import { leaderFilled } from './stats';
+import { leaderFilled, settlementModifiers } from './stats';
 import { kingdomCheck, resolveEvent, type CheckResult } from './turn';
 
 // ---------- context handed to each event's rules ----------
@@ -64,6 +64,35 @@ export class Ctx {
     const parts = (['economy', 'loyalty', 'stability', 'consumption'] as const)
       .filter((a) => ch[a]).map((a) => `${a === 'consumption' ? 'Consumption' : ATTR_LABEL[a]} ${ch[a]! > 0 ? '+' : '−'}${Math.abs(ch[a]!)}`);
     this.lines.push(`${parts.join(', ')} (${until === 'permanent' ? 'lasting' : until === 'event' ? 'while this lasts' : 'until the next Event phase'})`);
+  }
+  infamy(n: number) {
+    this.k.infamy = Math.max(0, (this.k.infamy ?? 0) + n);
+    this.lines.push(`Infamy ${n > 0 ? '+' : '−'}${Math.abs(n)}`);
+  }
+  /**
+   * Change settlement modifiers. 'here' is the event's settlement, 'kingdom' the whole kingdom, 'each' every
+   * settlement; by default an event localized to a settlement affects it, and other events the whole kingdom.
+   * Durations work like mod(); a number lasts that many turns.
+   */
+  smod(ch: Partial<Record<SettlementStat, number>>, until: 'event' | 'next-event' | 'permanent' | number, scope?: 'here' | 'kingdom' | 'each', label = this.ev.name) {
+    if (this.k.settings.permanentEventEffects && typeof until !== 'number') until = 'permanent';
+    if (until === 'event' && this.ev.lasts !== 'resolved') until = 'next-event';
+    const here = this.k.settlements.find((s) => s.name === this.ev.location);
+    scope ??= here ? 'here' : 'kingdom';
+    const targets = scope === 'each' ? this.k.settlements.map((s) => s.id) : scope === 'here' && here ? [here.id] : [undefined];
+    const list = (this.k.settlementAdjustments ??= []);
+    if (until === 'event') this.k.settlementAdjustments = list.filter((a) => !(a.eventId === this.ev.id && a.until === 'event'));
+    for (const settlementId of targets) {
+      this.k.settlementAdjustments!.push({
+        id: uid(), label, settlementId, mods: ch,
+        ...(typeof until === 'number' ? { expiresTurn: this.k.turn + until, eventId: this.ev.id }
+          : until === 'permanent' ? {} : { until, eventId: this.ev.id, turn: this.k.turn }),
+      });
+    }
+    const where = scope === 'each' ? 'in each settlement' : targets[0] ? `in ${here!.name}` : 'kingdom-wide';
+    const parts = SETTLEMENT_STATS.filter((st) => ch[st]).map((st) => `${STAT_LABEL[st]} ${ch[st]! > 0 ? '+' : '−'}${Math.abs(ch[st]!)}`);
+    const dur = typeof until === 'number' ? `for ${until} turns` : until === 'permanent' ? 'lasting' : until === 'event' ? 'while this lasts' : 'until the next Event phase';
+    this.lines.push(`${parts.join(', ')} ${where} (${dur})`);
   }
   checkMod(attr: Attr | 'all', value: number, eventsOnly = false) {
     (this.k.checkMods ??= []).push({ id: uid(), label: this.ev.name, attr, value, eventsOnly, turn: this.k.turn });
@@ -177,6 +206,15 @@ function affectedFarms(x: Ctx) {
   return x.k.features.farm ?? 0;
 }
 
+/** Sensational Crime: add the settlement's Law and subtract its Crime. */
+const lawCrime = (x: Ctx) => {
+  const s = x.settlement();
+  if (!s) return { value: 0, why: '' };
+  const v = settlementModifiers(x.k, s).values;
+  const value = v.law - v.crime;
+  return { value, why: `${value >= 0 ? '+' : '−'}${Math.abs(value)} for ${s.name}’s Law ${v.law} and Crime ${v.crime}` };
+};
+
 const continuousCount = (k: Kingdom, exceptId: string) => (k.events ?? []).filter((e) => e.lasts === 'resolved' && e.id !== exceptId).length;
 
 const feud: Resolver = {
@@ -184,7 +222,7 @@ const feud: Resolver = {
     id: 'check', label: 'Attempt a Loyalty check', checks: [{ attr: 'loyalty' }],
     run: (x, r) => {
       if (r[0].success) { x.unrest(1); x.end(); }
-      else { x.note('Corruption +1'); x.unrest(x.roll('1d6')); }
+      else { x.smod({ corruption: 1 }, 'event'); x.unrest(x.roll('1d6')); }
     },
   }],
 };
@@ -198,11 +236,12 @@ const inquisition: Resolver = {
         st.streak = Number(st.streak ?? 0) + 1;
         if (Number(st.streak) >= 2) { x.lines.push('Two successes in a row: the zealots disperse'); x.end(); return; }
         x.mod({ loyalty: -1, stability: -1 }, 'event');
-        x.note('Lore and Productivity −1');
+        x.smod({ lore: -1, productivity: -1 }, 'event');
       } else {
         st.streak = 0;
         x.mod({ loyalty: -2, stability: -2 }, 'event');
-        x.note('Infamy +1, Law +1; Lore and Productivity −2');
+        x.infamy(1);
+        x.smod({ law: 1, lore: -2, productivity: -2 }, 'event');
       }
     },
   }],
@@ -258,14 +297,14 @@ const demand = (kind: 'building' | 'improvement'): Resolver => ({
   ],
 });
 
-const discovery: Resolver = { onRoll: (x) => { x.fame(1); x.note(`Lore +${x.roll('1d4')}`); } };
+const discovery: Resolver = { onRoll: (x) => { x.fame(1); x.smod({ lore: x.roll('1d4') }, 'permanent'); } };
 
 // ---------- the events ----------
 export const RESOLVERS: Record<string, Resolver> = {
   // Beneficial kingdom events
   'archaeological-find': {
     onRoll: (x) => {
-      x.note('Lore +1');
+      x.smod({ lore: 1 }, 'permanent', 'kingdom');
       if (countKingdom(x.k, ['museum'])) x.note('Your Museum receives 10,000 gp worth of historical artifacts');
     },
   },
@@ -282,19 +321,24 @@ export const RESOLVERS: Record<string, Resolver> = {
     actions: [
       {
         id: 'attend', label: 'Attend and bring gifts (1d4 BP)',
-        run: (x) => { x.treasury(-x.roll('1d4')); x.note('For 1 year: Society +1, Fame +1 and +2 on edict checks relating to that kingdom'); x.end(); },
+        run: (x) => {
+          x.treasury(-x.roll('1d4'));
+          x.smod({ society: 1 }, 12, 'kingdom');
+          x.note('For 1 year: Fame +1 and +2 on edict checks relating to that kingdom');
+          x.end();
+        },
       },
       { id: 'decline', label: 'Decline', run: (x) => { x.lines.push('Declined the invitation'); x.end(); } },
     ],
   },
   'food-surplus': { onRoll: (x) => x.nextUpkeep(0.5, 0, 'Consumption halved by Food Surplus') },
-  'good-weather': { onRoll: (x) => { x.mod({ economy: 2, loyalty: 2 }, 'next-event'); x.note('Productivity +2'); } },
+  'good-weather': { onRoll: (x) => { x.mod({ economy: 2, loyalty: 2 }, 'next-event'); x.smod({ productivity: 2 }, 'next-event', 'kingdom'); } },
   'land-rush': {
     actions: [{
       id: 'check', label: 'Attempt a Loyalty check', checks: [{ attr: 'loyalty' }],
       run: (x, r) => {
         x.mod({ stability: -1 }, 'permanent', 'Land rush (remove after building a matching improvement next to it)');
-        x.note('Productivity and Society −1 until you build a matching improvement in an adjacent hex');
+        x.smod({ productivity: -1, society: -1 }, 'permanent', 'kingdom', 'Land rush (remove after building a matching improvement next to it)');
         x.unrest(r[0].success ? 1 : x.roll('1d4'));
         x.end();
       },
@@ -302,13 +346,16 @@ export const RESOLVERS: Record<string, Resolver> = {
   },
   'natural-blessing': { onRoll: (x) => x.checkMod('stability', 4) },
   'new-subjects': {
-    onRoll: (x) => { x.mod({ stability: 1 }, 'permanent', 'New subjects'); x.note('Society +1'); x.unrest(-1); x.treasury(x.roll('1d6!')); },
+    onRoll: (x) => { x.mod({ stability: 1 }, 'permanent', 'New subjects'); x.smod({ society: 1 }, 'permanent', 'kingdom'); x.unrest(-1); x.treasury(x.roll('1d6!')); },
   },
   'political-calm': {
     onRoll: (x) => {
       x.unrest(-x.roll('1d6'));
       x.checkMod('all', 2, true);
-      if (x.k.unrest === 0 && continuousCount(x.k, x.ev.id) === 0) x.mod({ loyalty: 1, stability: 1 }, 'permanent', 'Political calm');
+      if (x.k.unrest === 0 && continuousCount(x.k, x.ev.id) === 0) {
+        x.mod({ loyalty: 1, stability: 1 }, 'permanent', 'Political calm');
+        x.smod({ law: 1 }, 'permanent', 'kingdom');
+      }
     },
   },
 
@@ -387,7 +434,7 @@ export const RESOLVERS: Record<string, Resolver> = {
     }],
   },
   'public-scandal': {
-    onRoll: (x) => x.note('Infamy +1'),
+    onRoll: (x) => x.infamy(1),
     actions: [{
       id: 'check', label: 'Attempt a Loyalty check', checks: [{ attr: 'loyalty' }],
       run: (x, r) => { if (!r[0].success) { x.unrest(2); x.checkMod('loyalty', -4); } x.end(); },
@@ -399,14 +446,11 @@ export const RESOLVERS: Record<string, Resolver> = {
       run: (x, r) => {
         const s = successes(r);
         if (s === 2) { x.lines.push('The smugglers were stopped'); x.end(); return; }
-        if (s === 1) {
-          x.note(`Corruption +${x.roll('1d2')} in each settlement, Crime +1, Productivity −${x.roll('1d3')}`);
-          x.treasury(-x.roll('1d3'));
-          x.end();
-        } else {
-          x.note(`Corruption +${x.roll('1d4')} in each settlement, Crime +1, Productivity −${x.roll('1d6')}`);
-          x.treasury(-x.roll('1d6'));
-        }
+        const until = s === 1 ? 'next-event' : 'event';
+        x.smod({ corruption: x.roll(s === 1 ? '1d2' : '1d4') }, until, 'each');
+        x.smod({ crime: 1, productivity: -x.roll(s === 1 ? '1d3' : '1d6') }, until, 'kingdom');
+        x.treasury(-x.roll(s === 1 ? '1d3' : '1d6'));
+        if (s === 1) x.end();
       },
     }],
   },
@@ -417,10 +461,10 @@ export const RESOLVERS: Record<string, Resolver> = {
       const s = x.settlement();
       const n = s ? s.districts.flatMap((d) => d.buildings).filter((b) => !b.damaged && (building(b.type).economy ?? 0) > 0).length : 0;
       if (n) x.mod({ economy: n }, 'next-event');
-      x.note(`Corruption +${x.roll('1d4')} in ${s?.name ?? 'the settlement'}`);
+      x.smod({ corruption: x.roll('1d4') }, 'next-event');
     },
   },
-  'justice-prevails': { onRoll: (x) => { x.mod({ loyalty: 1 }, 'permanent', 'Justice prevails'); x.note('Law +1, Crime −1'); x.unrest(-1); } },
+  'justice-prevails': { onRoll: (x) => { x.mod({ loyalty: 1 }, 'permanent', 'Justice prevails'); x.smod({ law: 1, crime: -1 }, 'permanent'); x.unrest(-1); } },
   'noblesse-oblige': {
     onRoll: (x) => {
       const type = x.roll('1d100') <= 50 ? 'Monument' : 'Park';
@@ -461,7 +505,7 @@ export const RESOLVERS: Record<string, Resolver> = {
         if (!f) { x.lines.push('The cult was disbanded'); x.end(); return; }
         x.unrest(f);
         x.mod({ stability: -f }, f === 2 ? 'event' : 'next-event');
-        x.note(`Productivity and Society −${f}`);
+        x.smod({ productivity: -f, society: -f }, f === 2 ? 'event' : 'next-event');
         if (f < 2) x.end();
       },
     }],
@@ -472,7 +516,7 @@ export const RESOLVERS: Record<string, Resolver> = {
       run: (x, r) => {
         const s = successes(r);
         if (s === 2) { x.lines.push('The drug den was eliminated'); x.end(); return; }
-        x.note('Crime +1');
+        x.smod({ crime: 1 }, s === 1 ? 'next-event' : 'event');
         x.unrest(1);
         if (s === 1) { x.end(); return; }
         x.mod({ economy: -1, loyalty: -1, stability: -1 }, 'event');
@@ -497,12 +541,12 @@ export const RESOLVERS: Record<string, Resolver> = {
   },
   'sensational-crime': {
     actions: [{
-      id: 'check', label: 'Catch the criminal (two Stability checks)', checks: [{ attr: 'stability' }, { attr: 'stability' }],
+      id: 'check', label: 'Catch the criminal (two Stability checks)', checks: [{ attr: 'stability', bonus: lawCrime }, { attr: 'stability', bonus: lawCrime }],
       run: (x, r) => {
         const s = successes(r);
         if (s === 2) { x.lines.push('The criminal was caught'); x.end(); return; }
         if (s === 1) { x.unrest(1); return; }
-        x.note('Law −1');
+        x.smod({ law: -1 }, 'event');
         x.mod({ loyalty: -1 }, 'event');
         x.treasury(-x.roll('1d4'));
         x.unrest(2);
@@ -538,7 +582,7 @@ export const RESOLVERS: Record<string, Resolver> = {
       id: 'check', label: 'Stop the vandals (Loyalty and Stability checks)', checks: [{ attr: 'loyalty' }, { attr: 'stability' }],
       run: (x, r) => {
         const s = successes(r);
-        if (s === 1) { x.note('Society −1'); x.damageRandom(1); }
+        if (s === 1) { x.smod({ society: -1 }, 'next-event'); x.damageRandom(1); }
         if (s === 0) { x.destroyRandom(); x.damageRandom(x.roll('1d3')); }
         if (s === 2) x.lines.push('The vandals were stopped');
         x.end();
@@ -554,7 +598,7 @@ export const actionsFor = (k: Kingdom, ev: ActiveEvent) => (resolverFor(ev)?.act
 
 function finish(x: Ctx, title: string) {
   const { k, ev } = x;
-  const summary = [...x.lines, ...x.notes.map((n) => `Not tracked: ${n}`)].join('. ');
+  const summary = [...x.lines, ...x.notes.map((n) => `Note: ${n}`)].join('. ');
   if (summary) {
     ev.history.push({ turn: k.turn, text: summary + '.' });
     log(k, `${ev.name}${ev.location ? ` (${ev.location})` : ''}: ${title ? `${title}. ` : ''}${summary}.`, {
@@ -599,7 +643,7 @@ export function runAction(
   });
   a.run(x, results);
   ev.addressedTurn = k.turn;
-  if (ev.lasts !== 'resolved') ev.handledTurn = k.turn;
+  ev.handledTurn = k.turn; // once per Event phase
   finish(x, a.label);
   return results;
 }

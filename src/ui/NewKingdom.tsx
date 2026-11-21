@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { HEX_TERRAIN } from '../engine/map';
 import { DEFAULT_GEN, generateMap, randomSeed, type GenOptions } from '../engine/mapgen';
 import { ALIGNMENTS, TERRAIN, type Terrain } from '../rules/kingdom';
+import { GOVERNMENTS, type Government } from '../rules/settlement';
 import { createKingdom } from '../state/factory';
 import { addKingdom } from '../state/store';
 import { Panel, useId } from './common';
@@ -18,9 +19,11 @@ export function NewKingdom({ onDone, onCancel }: { onDone: () => void; onCancel?
   const [sname, setSname] = useState('');
   const [terrain, setTerrain] = useState<Terrain>('plains');
   const [random, setRandom] = useState(true);
+  const [gov, setGov] = useState<Government>('autocracy');
+  const [renown, setRenown] = useState<'fame' | 'infamy'>('fame');
   const [gen, setGen] = useState<GenOptions>(() => ({ ...DEFAULT_GEN, seed: randomSeed() }));
   const [size, setSize] = useState<MapSize>('medium');
-  const ids = { n: useId('nk'), a: useId('nk'), b: useId('nk'), s: useId('nk'), t: useId('nk'), size: useId('nk') };
+  const ids = { n: useId('nk'), a: useId('nk'), b: useId('nk'), s: useId('nk'), t: useId('nk'), size: useId('nk'), gov: useId('nk') };
   const generated = useMemo(() => (random ? generateMap(gen, SIZES[size][0], SIZES[size][1]) : null), [random, gen, size]);
   const capitalTerrain = (generated ? generated.map.hexes[generated.capital].terrain : terrain) as Terrain;
   const prep = TERRAIN[capitalTerrain].prepCost;
@@ -41,6 +44,17 @@ export function NewKingdom({ onDone, onCancel }: { onDone: () => void; onCancel?
         <label className="field" htmlFor={ids.b}>Starting build points
           <input id={ids.b} type="number" min={0} value={bp} onChange={(e) => setBp(Number(e.target.value) || 0)} />
         </label>
+        <label className="field" htmlFor={ids.gov}>Government
+          <select id={ids.gov} value={gov} onChange={(e) => setGov(e.target.value as Government)}>
+            {Object.entries(GOVERNMENTS).map(([id, g]) => <option key={id} value={id}>{g.label}</option>)}
+          </select>
+        </label>
+        <div className="field">Known for
+          <div className="segmented" role="group" aria-label="Starting reputation">
+            <button aria-pressed={renown === 'fame'} onClick={() => setRenown('fame')}>Fame 1</button>
+            <button aria-pressed={renown === 'infamy'} onClick={() => setRenown('infamy')}>Infamy 1</button>
+          </div>
+        </div>
         <label className="field" htmlFor={ids.s}>Capital name<input id={ids.s} type="text" value={sname} onChange={(e) => setSname(e.target.value)} /></label>
         {!random && (
           <label className="field" htmlFor={ids.t}>Capital hex terrain
@@ -80,7 +94,7 @@ export function NewKingdom({ onDone, onCancel }: { onDone: () => void; onCancel?
       <p className="small muted">A wealthy sponsor typically provides 50 BP. You'll start with {bp - 1 - prep} BP after claiming the hex and preparing the site.</p>
       <div className="row">
         <button className="btn primary" disabled={!ok} onClick={() => {
-          addKingdom(createKingdom({ name: name.trim(), alignment: ALIGNMENTS[align].value, startingBP: bp, settlementName: sname.trim(), terrain: capitalTerrain }, prep, generated ?? undefined));
+          addKingdom(createKingdom({ name: name.trim(), alignment: ALIGNMENTS[align].value, startingBP: bp, settlementName: sname.trim(), terrain: capitalTerrain, government: gov, renown }, prep, generated ?? undefined));
           onDone();
         }}>Found {name.trim() || 'kingdom'}</button>
         {onCancel && <button className="btn ghost" onClick={onCancel}>Cancel</button>}

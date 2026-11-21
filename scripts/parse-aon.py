@@ -61,6 +61,11 @@ for i, m in enumerate(matches):
     for k, name_ in [('Limit', 'limitText'), ('Special', 'specialText'), ('Magic Items', 'magicItems'), ('Settlement', 'settlementText')]:
         if k in fields and fields[k]:
             b[name_] = fields[k]
+    sm = {}
+    for stat, val in re.findall(r'(Corruption|Crime|Law|Lore|Productivity|Society) ([+–-]\d+)', fields.get('Settlement', '').split(';')[0]):
+        sm[stat.lower()] = num(val)
+    if sm:
+        b['settlementMods'] = sm
     sp = fields.get('Special', '')
     bv = re.search(r'Base value \+([\d,]+) gp', sp)
     if bv:

@@ -186,14 +186,25 @@ export function removeFeature(k: Kingdom, f: TerrainFeature, label: string) {
   log(k, `Removed ${label}.`);
 }
 
-export function adjust(k: Kingdom, what: 'treasury' | 'unrest' | 'fame', delta: number, reason: string) {
+export function adjust(k: Kingdom, what: 'treasury' | 'unrest' | 'fame' | 'infamy', delta: number, reason: string) {
   if (what === 'treasury') {
     k.treasury += delta;
     log(k, reason, { bp: delta });
   } else if (what === 'unrest') {
     log(k, reason, { unrest: changeUnrest(k, delta) });
-  } else {
+  } else if (what === 'fame') {
     k.fame += delta;
     log(k, reason);
+  } else {
+    k.infamy = Math.max(0, (k.infamy ?? 0) + delta);
+    log(k, reason);
   }
+}
+
+/** Ruler's choice when Size reaches 11, 26, 51, 101, or 201. */
+export function awardRenown(k: Kingdom, size: number, which: 'fame' | 'infamy') {
+  k.renownAwarded = [...(k.renownAwarded ?? []), size];
+  if (which === 'fame') k.fame += 1;
+  else k.infamy = (k.infamy ?? 0) + 1;
+  log(k, `Size reached ${size}: ${which === 'fame' ? 'Fame' : 'Infamy'} +1 (Ruler’s choice).`);
 }
