@@ -36,9 +36,10 @@ export function leaderFilled(k: Kingdom, id: RoleId) {
   return !!l && l.active && l.name.trim() !== '';
 }
 
+/** Building types giving benefits in a settlement (damaged buildings give none until repaired). */
 export function allBuildings(s: Settlement) {
   return s.districts.flatMap((d) => [
-    ...d.buildings.map((b) => b.type),
+    ...d.buildings.filter((b) => !b.damaged).map((b) => b.type),
     ...d.improvements,
   ]);
 }
@@ -190,6 +191,7 @@ export function settlementStats(s: Settlement): SettlementStats {
     for (const b of d.buildings) {
       const def = BUILDING_BY_ID[b.type];
       if (def.id !== 'waterway') lots += b.lots.length;
+      if (b.damaged) continue;
       base += def.baseValue ?? 0;
       defense += def.defense ?? 0;
       if (def.magicItems) magicItems.push(`${def.name}: ${def.magicItems}`);

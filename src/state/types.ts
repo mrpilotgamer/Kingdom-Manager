@@ -11,6 +11,8 @@ export interface PlacedBuilding {
   lots: Lot[];
   /** Id of the placed building whose discount paid for this one. */
   discountedBy?: string;
+  /** Damaged by an event: gives no benefits until half its cost is paid to repair it. */
+  damaged?: boolean;
 }
 
 export interface District {
@@ -86,6 +88,23 @@ export interface Modifier {
   loyalty: number;
   stability: number;
   consumption: number;
+  /** Set by events: 'event' lasts while that event is ongoing; 'next-event' ends at the next Event phase. */
+  until?: 'event' | 'next-event';
+  /** ActiveEvent id that created it. */
+  eventId?: string;
+  /** Turn it was created. */
+  turn?: number;
+}
+
+/** A bonus or penalty on kingdom checks, from an event, until the next Event phase. */
+export interface CheckModifier {
+  id: string;
+  label: string;
+  attr: Attr | 'all';
+  value: number;
+  /** Only applies to checks made to resolve events. */
+  eventsOnly?: boolean;
+  turn: number;
 }
 
 export type Phase = 'upkeep' | 'edict' | 'income' | 'event';
@@ -110,8 +129,15 @@ export interface ActiveEvent {
   tags: string;
   text: string;
   startedTurn: number;
-  /** 'resolved': continues every Event phase until resolved. 'next-event': ends at the next Event phase. */
-  lasts: 'resolved' | 'next-event';
+  /**
+   * 'resolved': continues every Event phase until resolved. 'next-event': ends at the next Event phase.
+   * 'once': happens this turn only (it may still need checks); cleared at the next Event phase.
+   */
+  lasts: 'resolved' | 'next-event' | 'once';
+  /** Event-specific memory, e.g. a run of successful checks or what the citizens demand. */
+  state?: Record<string, string | number>;
+  /** Turn the event's options were last carried out (once per Event phase). */
+  handledTurn?: number;
   /** Settlement or hex it affects, if any. */
   location?: string;
   /** Turn it was last dealt with (checked, or let continue). */
@@ -148,9 +174,13 @@ export interface Kingdom {
   log: LogEntry[];
   /** Ongoing events (continuous, or lasting until the next Event phase). Missing on older saves. */
   events?: ActiveEvent[];
+  /** Temporary bonuses and penalties on kingdom checks from events. */
+  checkMods?: CheckModifier[];
+  /** Consumption change for the next Upkeep phase only (Food Surplus, Food Shortage, Crop Failure). */
+  nextUpkeep?: { multiplier: number; add: number; labels: string[] };
   turnState: TurnState;
   eventLastTurn: boolean;
-  settings: { districtsAddConsumption: boolean; diagonalAdjacency: boolean; setupMode: boolean };
+  settings: { districtsAddConsumption: boolean; diagonalAdjacency: boolean; setupMode: boolean; permanentEventEffects?: boolean };
   createdAt: number;
   updatedAt: number;
 }

@@ -268,3 +268,6 @@ table.list td { padding: 8px; border-bottom: 1px solid var(--line); vertical-ali
 .gen-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .resize input[type="number"] { width: 4em; }
 .minimap { width: 100%; height: auto; display: block; border-radius: var(--radius); background: var(--surface-2); }
+.event-history { margin: 0; padding-left: 18px; }
+.event-actions { border-top: 1px dashed var(--line); padding-top: 10px; }
+.bldg.damaged { background-image: repeating-linear-gradient(45deg, transparent 0 6px, color-mix(in srgb, var(--danger) 30%, transparent) 6px 8px); }

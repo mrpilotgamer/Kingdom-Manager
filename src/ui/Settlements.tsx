@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  addDistrict, changeAddon, demolish, foundSettlement, placeBuilding, removeSettlement, setWall, toggleImprovement,
+  addDistrict, changeAddon, demolish, foundSettlement, log, placeBuilding, removeSettlement, setWall, toggleImprovement,
   upgradeBuilding,
 } from '../engine/actions';
 import { buildCost, upgradeCost } from '../engine/costs';
@@ -176,9 +176,9 @@ function SettlementView({ k, s, d, setDId }: { k: Kingdom; s: Settlement; d: Dis
                 const def = building(b.type);
                 const upgrading = mode.kind === 'place' && mode.upgradeOf?.id === b.id;
                 return (
-                  <button key={b.id} className={`bldg cat-${def.category} ${issueIds.has(b.id) ? 'issue' : ''}`}
+                  <button key={b.id} className={`bldg cat-${def.category} ${issueIds.has(b.id) ? 'issue' : ''} ${b.damaged ? 'damaged' : ''}`}
                     style={{ ...area(b.lots), opacity: upgrading ? 0.35 : 1 }} aria-pressed={selected === b.id}
-                    title={`${def.name}${issueIds.has(b.id) ? ' (rules issue)' : ''}`}
+                    title={`${def.name}${b.damaged ? ' (damaged)' : ''}${issueIds.has(b.id) ? ' (rules issue)' : ''}`}
                     onMouseEnter={() => mode.kind === 'place' && setHover(b.lots[0])}
                     onClick={() => {
                       if (mode.kind === 'place') { setAnchor(b.lots[0]); setHover(null); return; }
@@ -292,7 +292,6 @@ function BuildingDetail({ k, s, b, issues, onClose, onUpgrade, onDemolish }: {
     ['Discount', def.discounts?.map((x) => building(x).name).join(', ')],
     ['Limit', def.limitText], ['Special', def.specialText], ['Magic items', def.magicItems], ['Settlement', def.settlementText],
   ];
-  void s;
   return (
     <Panel title={def.name} actions={<button className="btn sm ghost" onClick={onClose}>Close</button>}>
       <div className="row">
@@ -306,6 +305,18 @@ function BuildingDetail({ k, s, b, issues, onClose, onUpgrade, onDemolish }: {
         {rows.filter(([, v]) => v).map(([l, v]) => <tr key={l}><td style={{ width: '6.5em', verticalAlign: 'top' }}><strong>{l}</strong></td><td style={{ textAlign: 'left', fontWeight: 400, width: 'auto' }}>{v}</td></tr>)}
       </tbody></table>
       {issues.map((i) => <p key={i} className="callout">{i}</p>)}
+      {b.damaged && (
+        <div className="callout bad row">
+          <span style={{ flex: 1 }}>Damaged: it gives no benefits until repaired for half its cost.</span>
+          <button className="btn sm" onClick={() => update(`Repair ${def.name}`, (dk) => {
+            const pb = dk.settlements.flatMap((x) => x.districts).flatMap((x) => x.buildings).find((x) => x.id === b.id)!;
+            pb.damaged = false;
+            const cost = dk.settings.setupMode ? 0 : Math.ceil(def.cost / 2);
+            dk.treasury -= cost;
+            log(dk, `Repaired the ${def.name} in ${s.name}.`, { bp: cost ? -cost : undefined });
+          })}>Repair{setup ? '' : ` (${Math.ceil(def.cost / 2)} BP)`}</button>
+        </div>
+      )}
       <div className="row">
         {def.upgradeTo?.map((to) => (
           <button key={to} className="btn" onClick={() => onUpgrade(to)}>

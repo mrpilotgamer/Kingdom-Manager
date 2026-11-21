@@ -25,6 +25,11 @@ does the math, and walks your group through each kingdom turn.
   per-turn limits (Table 4–4) and rolls on the event tables, showing the full event text. Continuous events stay on an
   ongoing list and come back every Event phase until resolved; events that last "until the next Event phase" clear
   themselves. You can add your own campaign events too.
+- **Automated events**: every rulebook event has its own options and checks (one, two, or one per threatened lot), and
+  applies its results: Unrest, Treasury, Fame, timed attribute changes, check bonuses, next-Upkeep Consumption,
+  damaged or destroyed buildings, a leader lost to assassins, and the citizens' demands. Penalties for Tenements,
+  Waterfronts, Piers, and similar buildings are counted for you. Settlement modifiers and Infamy aren't tracked yet and
+  are logged as reminders.
 - **Chronicle and Undo**: every change is logged, and the last 40 changes can be undone.
 - **Saving**: everything is stored in your browser. Export or import a kingdom as JSON to back it up or move it.
 - **Setup mode**: enter a kingdom you're already running, without paying for or logging every past building.
@@ -40,6 +45,10 @@ trade and diplomatic edicts, vassalage).
   diagonal lots.
 - **Taxes**: if the Economy check fails, no BP are collected (this follows the rulebook's worked example).
 - **Brothel**: left out because Archives of Nethys doesn't list its full entry.
+- **Event durations**: the rules don't say how long changes like "Stability decreases by 2" last. By default they last
+  while a continuous event does (refreshed each turn, not stacked) or until the next Event phase for one-time events.
+  Options can make them permanent instead.
+- **Slavers**: the printed text says failing lowers Unrest; the app treats that as a typo and raises it.
 
 ## Development
 

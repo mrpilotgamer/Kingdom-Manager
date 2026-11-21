@@ -212,7 +212,17 @@ function Modifiers({ k }: { k: Kingdom }) {
       <button className="btn sm" onClick={() => update('Add modifier', (d) => {
         d.modifiers.push({ id: uid(), label: 'New modifier', economy: 0, loyalty: 0, stability: 0, consumption: 0 });
       })}>Add modifier</button>}>
-      <p className="small muted">Lasting effects from events, magic, or house rules (for example, Good Weather: Economy +2, Loyalty +2 until the next Event phase).</p>
+      <p className="small muted">Lasting effects from events, magic, or house rules. Events add and remove their own; you can edit or remove any of them.</p>
+      {(k.checkMods?.length ?? 0) > 0 && (
+        <div className="stack">
+          {k.checkMods!.map((m) => (
+            <div key={m.id} className="callout info small">
+              {m.label}: {m.value > 0 ? '+' : '−'}{Math.abs(m.value)} on {m.attr === 'all' ? (m.eventsOnly ? 'checks to resolve continuous events' : 'all checks') : `${m.attr[0].toUpperCase() + m.attr.slice(1)} checks`} until the next Event phase
+            </div>
+          ))}
+        </div>
+      )}
+      {k.nextUpkeep && <div className="callout info small">Next Upkeep: {k.nextUpkeep.labels.join('; ')}</div>}
       {k.modifiers.length > 0 && (
         <div className="table-wrap">
           <table className="list">
@@ -220,7 +230,10 @@ function Modifiers({ k }: { k: Kingdom }) {
             <tbody>
               {k.modifiers.map((m) => (
                 <tr key={m.id}>
-                  <td><input type="text" aria-label="Source" value={m.label} onChange={(e) => set(m.id, 'label', e.target.value)} /></td>
+                  <td>
+                    <input type="text" aria-label="Source" value={m.label} onChange={(e) => set(m.id, 'label', e.target.value)} />
+                    {m.until && <div className="small muted">{m.until === 'event' ? 'While the event lasts' : 'Until the next Event phase'}</div>}
+                  </td>
                   {(['economy', 'loyalty', 'stability', 'consumption'] as const).map((f) => (
                     <td key={f}><input type="number" aria-label={f} value={m[f]} onChange={(e) => set(m.id, f, e.target.value)} /></td>
                   ))}

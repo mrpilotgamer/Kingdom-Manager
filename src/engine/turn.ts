@@ -3,6 +3,7 @@ import eventsData from '../rules/events.json';
 import { ATTR_LABEL, ATTRS, type Attr } from '../rules/kingdom';
 import type { ActiveEvent, Kingdom, Phase } from '../state/types';
 import { uid } from '../state/util';
+import { applyOnRoll, hasActions } from './eventEffects';
 import { changeUnrest, log } from './actions';
 import { defaultRng, die, type Rng } from './dice';
 import { computeStats } from './stats';
@@ -25,9 +26,15 @@ export interface CheckResult {
 }
 
 /** 1d20 + attribute − Unrest (+ bonus) vs Control DC. Natural 1 fails, natural 20 succeeds. Anarchy treats results as 0. */
-export function kingdomCheck(k: Kingdom, attr: Attr, roll: number, bonus = 0): CheckResult {
+/** Event bonuses and penalties that apply to a check (Natural Blessing, Public Scandal, ...). */
+export function checkModsFor(k: Kingdom, attr: Attr, forEvent = false) {
+  return (k.checkMods ?? []).filter((m) => (m.attr === attr || m.attr === 'all') && (!m.eventsOnly || forEvent));
+}
+
+export function kingdomCheck(k: Kingdom, attr: Attr, roll: number, bonus = 0, forEvent = false): CheckResult {
   const st = computeStats(k);
   const anarchy = k.unrest >= 20;
+  bonus += checkModsFor(k, attr, forEvent).reduce((n, m) => n + m.value, 0);
   const total = anarchy ? 0 : roll + st[attr] - k.unrest + bonus;
   const dc = st.controlDC;
   const success = roll === 20 || (roll !== 1 && total >= dc);
@@ -61,11 +68,14 @@ export function resolveStability(k: Kingdom, roll: number, rng: Rng = defaultRng
 
 export function payConsumption(k: Kingdom) {
   const st = computeStats(k);
-  k.treasury -= st.consumption;
+  const nu = k.nextUpkeep;
+  const amount = nu ? Math.max(0, Math.ceil(st.consumption * nu.multiplier) + nu.add) : st.consumption;
+  k.treasury -= amount;
   let unrest = 0;
-  let text = `Paid ${st.consumption} BP Consumption.`;
+  let text = `Paid ${amount} BP Consumption${nu ? ` (normally ${st.consumption}; ${nu.labels.join(', ')})` : ''}.`;
+  delete k.nextUpkeep;
   if (k.treasury < 0) { unrest = changeUnrest(k, 2); text += ' Treasury is negative: Unrest +2.'; }
-  log(k, text, { bp: -st.consumption, unrest });
+  log(k, text, { bp: -amount, unrest });
   done(k, 'upkeep.consumption', text);
 }
 
@@ -205,10 +215,10 @@ export function trackEvent(
     location = k.settlements[Math.floor(rng() * k.settlements.length)].name;
   const ev: ActiveEvent = {
     id: uid(), eventId: e.eventId, name: e.name, tags: e.tags, text: e.text, startedTurn: k.turn, lasts, location,
-    addressedTurn: k.turn, history: [{ turn: k.turn, text: lasts === 'resolved' ? 'Began.' : 'Began; lasts until the next Event phase.' }],
+    addressedTurn: k.turn, history: [{ turn: k.turn, text: lasts === 'resolved' ? 'Began.' : lasts === 'once' ? 'Happened.' : 'Began; lasts until the next Event phase.' }],
   };
   k.events.push(ev);
-  log(k, `${ev.name}${location ? ` (${location})` : ''} ${lasts === 'resolved' ? 'is ongoing until resolved' : 'lasts until the next Event phase'}.`);
+  if (lasts !== 'once') log(k, `${ev.name}${location ? ` (${location})` : ''} ${lasts === 'resolved' ? 'is ongoing until resolved' : 'lasts until the next Event phase'}.`);
   return ev;
 }
 
@@ -216,7 +226,7 @@ export function trackEvent(
 export function eventCheck(k: Kingdom, id: string, attr: Attr, roll: number, bonus = 0) {
   const ev = k.events?.find((e) => e.id === id);
   if (!ev) return null;
-  const c = kingdomCheck(k, attr, roll, bonus);
+  const c = kingdomCheck(k, attr, roll, bonus, true);
   const text = `${ATTR_LABEL[attr]} check ${c.total} vs DC ${c.dc}: ${c.success ? 'success' : 'failure'}.`;
   ev.history.push({ turn: k.turn, text });
   ev.addressedTurn = k.turn;
@@ -236,19 +246,27 @@ export function resolveEvent(k: Kingdom, id: string) {
   const ev = k.events?.find((e) => e.id === id);
   if (!ev) return;
   k.events = k.events!.filter((e) => e.id !== id);
+  k.modifiers = k.modifiers.filter((m) => !(m.eventId === id && m.until === 'event'));
   log(k, `${ev.name}${ev.location ? ` (${ev.location})` : ''} resolved after ${k.turn - ev.startedTurn + 1} turn${k.turn === ev.startedTurn ? '' : 's'}.`);
 }
 
 /** Ongoing events still waiting to be dealt with this Event phase. */
 export const pendingEvents = (k: Kingdom) =>
-  (k.events ?? []).filter((e) => e.lasts === 'resolved' && e.startedTurn < k.turn && e.addressedTurn !== k.turn);
+  (k.events ?? []).filter((e) =>
+    (e.lasts === 'resolved' && e.startedTurn < k.turn && e.addressedTurn !== k.turn) ||
+    (e.lasts === 'once' && e.handledTurn !== k.turn && hasActions(e)));
 
 export function rollEvents(k: Kingdom, rng: Rng = defaultRng) {
-  // Events that lasted "until the next Event phase" end now.
-  for (const e of (k.events ?? []).filter((x) => x.lasts === 'next-event' && x.startedTurn < k.turn)) {
+  // Events and effects that lasted "until the next Event phase" end now.
+  const expiring = (x: ActiveEvent) => (x.lasts === 'next-event' || x.lasts === 'once') && x.startedTurn < k.turn;
+  for (const e of (k.events ?? []).filter((x) => expiring(x) && x.lasts === 'next-event')) {
     log(k, `${e.name}${e.location ? ` (${e.location})` : ''} has ended.`);
   }
-  k.events = (k.events ?? []).filter((x) => !(x.lasts === 'next-event' && x.startedTurn < k.turn));
+  k.events = (k.events ?? []).filter((x) => !expiring(x));
+  const before = k.modifiers.length + (k.checkMods?.length ?? 0);
+  k.modifiers = k.modifiers.filter((m) => !(m.until === 'next-event' && (m.turn ?? 0) < k.turn));
+  k.checkMods = (k.checkMods ?? []).filter((m) => m.turn >= k.turn);
+  if (k.modifiers.length + k.checkMods.length < before) log(k, 'Effects lasting until this Event phase have ended.');
   const chance = eventChance(k);
   const roll = die(100, rng);
   const occurs = roll <= chance;
@@ -261,8 +279,9 @@ export function rollEvents(k: Kingdom, rng: Rng = defaultRng) {
   k.turnState.done['event.occurred'] = occurs ? 'yes' : '';
   k.turnState.done['event.list'] = JSON.stringify(events);
   for (const e of events) {
-    if (isContinuous(e.tags)) trackEvent(k, { eventId: e.id, name: e.name, tags: e.tags, text: e.text }, 'resolved', undefined, rng);
-    else if (lastsUntilNextEvent(e.text)) trackEvent(k, { eventId: e.id, name: e.name, tags: e.tags, text: e.text }, 'next-event', undefined, rng);
+    const lasts = isContinuous(e.tags) ? 'resolved' : lastsUntilNextEvent(e.text) ? 'next-event' : 'once';
+    const ev = trackEvent(k, { eventId: e.id, name: e.name, tags: e.tags, text: e.text }, lasts, undefined, rng);
+    applyOnRoll(k, ev, rng);
   }
   return { roll, chance, occurs, events };
 }

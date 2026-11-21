@@ -9,7 +9,7 @@ import { ATTR_LABEL, ATTRS } from '../rules/kingdom';
 import { update } from '../state/store';
 import type { Kingdom, Phase } from '../state/types';
 import { CheckRow, Panel, useId } from './common';
-import { AddEventForm, OngoingEventCard, RolledEventCard } from './Events';
+import { AddEventForm, OngoingEventCard, RolledLine } from './Events';
 import { Edicts } from './Overview';
 
 export type Tab = 'overview' | 'turn' | 'settlements' | 'territory' | 'leaders' | 'log' | 'settings';
@@ -199,11 +199,11 @@ function Income({ k }: { k: Kingdom }) {
 
 function EventPhase({ k }: { k: Kingdom }) {
   const done = k.turnState.done['event.roll'];
-  let events: RolledEvent[] = [];
-  try { events = JSON.parse(k.turnState.done['event.list'] ?? '[]'); } catch { /* older save */ }
+  let rolled: RolledEvent[] = [];
+  try { rolled = JSON.parse(k.turnState.done['event.list'] ?? '[]'); } catch { /* older save */ }
   const ongoing = (k.events ?? []).filter((e) => e.startedTurn < k.turn);
-  const pending = pendingEvents(k);
-  const fresh = (k.events ?? []).filter((e) => e.startedTurn === k.turn && !events.some((r) => r.id === e.eventId));
+  const fresh = (k.events ?? []).filter((e) => e.startedTurn === k.turn);
+  const pending = pendingEvents(k).filter((e) => e.startedTurn < k.turn);
   return (
     <div>
       <Step n={1} title="Continue ongoing events" done={ongoing.length ? undefined : 'No ongoing events.'}>
@@ -211,7 +211,7 @@ function EventPhase({ k }: { k: Kingdom }) {
           <>
             <p className="small">
               {pending.length
-                ? `${pending.length} continuous event${pending.length > 1 ? 's' : ''} still need${pending.length > 1 ? '' : 's'} dealing with this turn: attempt the check, or let it continue.`
+                ? `${pending.length} continuous event${pending.length > 1 ? 's' : ''} still need${pending.length > 1 ? '' : 's'} dealing with this turn.`
                 : 'Every continuous event has been dealt with this turn.'}
               {ongoing.some((e) => e.lasts === 'next-event') ? ' Events that last until the next Event phase end when you roll below.' : ''}
             </p>
@@ -225,16 +225,16 @@ function EventPhase({ k }: { k: Kingdom }) {
         <p className="small">{eventChance(k)}% chance this turn, {k.eventLastTurn ? 'because an event happened last turn' : 'because nothing happened last turn'}. The GM may also run a campaign event instead.</p>
         <div><button className="btn primary" onClick={() => update('Roll event', (d) => { rollEvents(d); })}>Roll</button></div>
       </Step>
-      {done && events.length > 0 && (
+      {fresh.length > 0 && (
         <div className="stack">
-          {events.map((e, i) => <RolledEventCard key={i} k={k} e={e} />)}
+          {rolled.length > 0 && <div className="row">{rolled.map((e, i) => <RolledLine key={i} e={e} />)}</div>}
+          {fresh.map((e) => <OngoingEventCard key={e.id} k={k} e={e} eventPhase />)}
           <p className="callout info">
-            Resolve this turn's checks with the GM and record the results with Quick adjust on the Kingdom tab, or as an
-            ongoing modifier. Continuous events come back in this phase every turn until you mark them resolved.
+            Effects are applied automatically. Settlement modifiers (Corruption, Crime, Law, Lore, Productivity, Society)
+            and Infamy aren't tracked yet, so they're listed in the Chronicle as reminders.
           </p>
         </div>
       )}
-      {fresh.length > 0 && <div className="stack">{fresh.map((e) => <OngoingEventCard key={e.id} k={k} e={e} eventPhase={false} />)}</div>}
       <Step n={3} title="Campaign events (optional)">
         <p className="small muted">Add your own event to track, such as a plot development from the adventure.</p>
         <AddEventForm />
