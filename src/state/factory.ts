@@ -1,4 +1,5 @@
 import { newDistrict } from '../engine/actions';
+import { fromPreset, presetByName } from '../engine/armies';
 import { drawRiverPath, key, newMap, syncFromMap } from '../engine/map';
 import type { Generated } from '../engine/mapgen';
 import type { Alignment, Attr, Terrain } from '../rules/kingdom';
@@ -90,6 +91,14 @@ export function sampleKingdom(): Kingdom {
     pb('shrine', [2, 4]), pb('watchtower', [3, 4]), pb('mill', [2, 5]), pb('smithy', [3, 5]),
     pb('house', [1, 2]), pb('shop', [1, 3]), pb('town-hall', [4, 2], [4, 3]),
   ];
+  const guard = fromPreset(presetByName('Soldiers')!, 'kingdom');
+  guard.name = 'Greyford Guard';
+  guard.commander = { name: 'Sir Oric Hale', cha: 3, profession: 5, level: 6, leadershipFeat: false, role: 'general', boons: ['merciless'] };
+  guard.history.push({ turn: 2, text: 'Recruited.' });
+  const raiders = fromPreset(presetByName('Orc horde')!, 'enemy');
+  raiders.name = 'Tusk Moon raiders';
+  raiders.history.push({ turn: 4, text: 'Spotted in the hills to the south.' });
+  k.armies = [guard, raiders];
   k.map = sampleMap();
   k.settlements = [{ id: uid(), name: 'Greyford', terrain: 'plains', districts: [d], hexKey: key(7, 5) }];
   syncFromMap(k);

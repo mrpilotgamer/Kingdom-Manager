@@ -2,6 +2,8 @@ import type { Alignment, Attr, Terrain, TerrainFeature } from '../rules/kingdom'
 import type { RoleId } from '../rules/leadership';
 import type { GenParams } from '../engine/mapgen';
 import type { Government, SettlementStat } from '../rules/settlement';
+import type { ArmySize, BoonId, HitDie, SpecialId, TacticId } from '../rules/massCombat';
+import type { Battle } from '../engine/battle';
 
 export type Side = 'n' | 'e' | 's' | 'w';
 export type Lot = [row: number, col: number];
@@ -136,6 +138,55 @@ export interface LogEntry {
   unrest?: number;
 }
 
+export interface Commander {
+  name: string;
+  /** Added to Morale checks. */
+  cha: number;
+  /** Ranks in Profession (soldier). */
+  profession: number;
+  /** Character level (or Hit Dice). */
+  level: number;
+  leadershipFeat: boolean;
+  /** A kingdom leader commanding in person (gets that role's boons). */
+  role?: RoleId;
+  boons: BoonId[];
+  /** Tactic granted by the Bonus Tactic boon. */
+  bonusTactic?: TacticId;
+}
+
+export interface Army {
+  id: string;
+  name: string;
+  side: 'kingdom' | 'enemy';
+  /** e.g. "humans (fighter 2)" */
+  type: string;
+  alignment: string;
+  size: ArmySize;
+  /** CR of one unit (fractions allowed: 1/3 = 0.333...). */
+  cr: number;
+  /** CR of the mounts, if stronger than the riders. */
+  mountCr?: number;
+  hd: HitDie;
+  /** Hexes per day. */
+  speed: number;
+  hp: number;
+  tactics: TacticId[];
+  resources: { armor?: 0 | 1 | 2; weapons?: 0 | 1 | 2; mounts?: boolean; ranged?: boolean; potions?: boolean; siege?: number };
+  specials: { id: SpecialId; value?: number; note?: string }[];
+  /** GM adjustments to OM and DV. */
+  om: number;
+  dv: number;
+  morale: number;
+  commander?: Commander;
+  status: 'ready' | 'routed' | 'defeated' | 'disbanded';
+  /** Settlement id when held in reserve (paid monthly instead of weekly). */
+  reserve?: string;
+  /** Behind on Consumption: Morale −2 until paid. */
+  unpaid?: boolean;
+  lastBattleTurn?: number;
+  history: { turn: number; text: string }[];
+}
+
 /** An event that carries over between turns. */
 export interface ActiveEvent {
   id: string;
@@ -193,6 +244,10 @@ export interface Kingdom {
   features: Partial<Record<TerrainFeature, number>>;
   settlements: Settlement[];
   map?: HexMap;
+  /** Missing on older saves. */
+  armies?: Army[];
+  /** The battle being fought, if any. */
+  battle?: Battle;
   modifiers: Modifier[];
   log: LogEntry[];
   /** Ongoing events (continuous, or lasting until the next Event phase). Missing on older saves. */

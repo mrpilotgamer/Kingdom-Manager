@@ -275,3 +275,26 @@ table.list td { padding: 8px; border-bottom: 1px solid var(--line); vertical-ali
 .smod-row { cursor: pointer; }
 .field > .segmented { color: var(--ink); }
 .breakdown td.smod-detail { text-align: left; font-weight: 400; width: auto; padding-left: 12px; }
+
+/* Armies */
+.army-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 12px; }
+.army-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; background: var(--bg); min-width: 0; }
+.army-card.enemy { border-left: 3px solid var(--danger); }
+.army-card.kingdom { border-left: 3px solid var(--accent); }
+.statline { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+.statline b { font-weight: 700; margin-right: 3px; }
+.army-dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; margin: 0; }
+.army-dl dt { font-weight: 700; }
+.army-dl dd { margin: 0; }
+.army-editor { border-top: 1px dashed var(--line); padding-top: 10px; }
+.army-editor h4, .battle-log h4 { margin: 4px 0 0; font-size: 0.95rem; }
+.check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 4px 12px; }
+.hpbar { display: block; height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; border: 1px solid var(--line); }
+.hpbar > span { display: block; height: 100%; background: var(--ok); }
+.hpbar > span.mid { background: var(--warn); }
+.hpbar > span.low { background: var(--danger); }
+.recruit { width: 100%; }
+.battle-sides { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 16px; }
+.battle-army { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: var(--bg); }
+.battle-army.routed, .battle-army.defeated, .battle-army.withdrawn { opacity: 0.6; }
+.battle-log ul { margin: 4px 0 0; padding-left: 18px; }

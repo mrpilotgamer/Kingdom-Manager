@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { log, loseHex } from '../engine/actions';
+import { activeArmies, armyUpkeepTotal, payArmies, rally } from '../engine/armies';
 import { computeStats } from '../engine/stats';
 import {
   collectTaxes, deposit, endTurn, eventChance, modifyUnrest, payConsumption, PHASES, resolveStability, rollEvents,
@@ -12,7 +13,7 @@ import { CheckRow, Panel, useId } from './common';
 import { AddEventForm, OngoingEventCard, RolledLine } from './Events';
 import { Edicts } from './Overview';
 
-export type Tab = 'overview' | 'turn' | 'settlements' | 'territory' | 'leaders' | 'log' | 'settings';
+export type Tab = 'overview' | 'turn' | 'settlements' | 'territory' | 'armies' | 'leaders' | 'log' | 'settings';
 
 function Step({ n, title, done, children }: { n: number; title: string; done?: string; children?: ReactNode }) {
   return (
@@ -67,8 +68,9 @@ function Upkeep({ k, go }: { k: Kingdom; go: (t: Tab) => void }) {
   const done = k.turnState.done;
   const anarchy = k.unrest >= 20;
   if (k.size === 0) return <p className="callout">Your kingdom controls no hexes, so the Upkeep phase is skipped.</p>;
-  const negative = ATTRS.filter((a) => st[a] < 0);
+  const negative = ATTRS.filter((x) => st[x] < 0);
   const gain = negative.length + st.vacancyUnrest;
+  const a = activeArmies(k).length ? 1 : 0;
   return (
     <div>
       <Step n={1} title="Determine kingdom stability" done={done['upkeep.stability']}>
@@ -80,19 +82,20 @@ function Upkeep({ k, go }: { k: Kingdom; go: (t: Tab) => void }) {
           {k.treasury - st.consumption < 0 ? ', which is negative: Unrest +2.' : '.'}</p>
         <div><button className="btn primary" onClick={() => update('Pay Consumption', payConsumption)}>Pay {st.consumption} BP</button></div>
       </Step>
-      <Step n={3} title="Fill vacant magic item slots">
+      <ArmyUpkeep k={k} go={go} n={3} />
+      <Step n={3 + a} title="Fill vacant magic item slots">
         <p className="small muted">Roll d% for each district with an open slot: 51–100 fills it with an item up to the settlement's base value. Track items at the table for now.</p>
       </Step>
-      <Step n={4} title="Modify Unrest" done={done['upkeep.unrest']}>
+      <Step n={4 + a} title="Modify Unrest" done={done['upkeep.unrest']}>
         <p className="small">
           {gain
-            ? <>Unrest +{gain}: {[negative.length ? `${negative.map((a) => ATTR_LABEL[a]).join(', ')} negative` : '', st.vacancyUnrest ? `vacant leadership roles (+${st.vacancyUnrest})` : ''].filter(Boolean).join('; ')}.</>
+            ? <>Unrest +{gain}: {[negative.length ? `${negative.map((x) => ATTR_LABEL[x]).join(', ')} negative` : '', st.vacancyUnrest ? `vacant leadership roles (+${st.vacancyUnrest})` : ''].filter(Boolean).join('; ')}.</>
             : 'No attribute is negative and no Unrest-causing role is vacant.'}
         </p>
         <div><button className="btn primary" onClick={() => update('Modify Unrest', modifyUnrest)}>Apply</button></div>
       </Step>
       {k.leaders.royalEnforcer?.name && k.leaders.royalEnforcer.active && (
-        <Step n={5} title="Royal Enforcer (optional)" done={done['upkeep.enforcer']}>
+        <Step n={5 + a} title="Royal Enforcer (optional)" done={done['upkeep.enforcer']}>
           <p className="small">Reduce Unrest by 1, then attempt a Loyalty check. If it fails, Loyalty drops by 1 for good.</p>
           <CheckRow k={{ ...k, unrest: Math.max(0, k.unrest - 1) }} attr="loyalty" label="Crack down" disabled={k.unrest === 0}
             onResolve={(r) => update('Royal Enforcer', (d) => royalEnforcer(d, r))} />
@@ -134,7 +137,8 @@ function EdictPhase({ k, go }: { k: Kingdom; go: (t: Tab) => void }) {
         <div><button className="btn" onClick={() => go('settlements')}>Open settlements</button></div>
       </Step>
       <Step n={5} title="Create army units">
-        <p className="small muted">Mass combat is planned for a later version.</p>
+        <p className="small">Recruiting, expanding, or equipping an army uses the same allowance as founding a settlement ({t.settlements} of {st.limits.settlements} used).</p>
+        <div><button className="btn" onClick={() => go('armies')}>Open armies</button></div>
       </Step>
       <Step n={6} title="Issue edicts">
         <Edicts k={k} />
@@ -239,5 +243,41 @@ function EventPhase({ k }: { k: Kingdom }) {
         <AddEventForm />
       </Step>
     </div>
+  );
+}
+
+/** Upkeep: pay army Consumption (weekly for deployed armies, monthly in reserve) and rally routed armies. */
+function ArmyUpkeep({ k, go, n }: { k: Kingdom; go: (t: Tab) => void; n: number }) {
+  const armies = activeArmies(k);
+  if (!armies.length) return null;
+  const total = armyUpkeepTotal(k);
+  const done = k.turnState.done['upkeep.armies'];
+  const routed = armies.filter((a) => a.status === 'routed');
+  return (
+    <Step n={n} title="Pay and rally your armies" done={done && !routed.some((a) => !k.turnState.done[`rally.${a.id}`]) ? done : undefined}>
+      {!done && (
+        <>
+          <p className="small">
+            {armies.length} arm{armies.length === 1 ? 'y' : 'ies'} cost {total} BP this month (four weeks of Consumption for deployed
+            armies, one month for armies in reserve). Unpaid armies take Morale −2 until they’re paid. Armies without a commander
+            lose Morale each week; armies that didn’t fight last month heal to full.
+          </p>
+          <div className="row">
+            <button className="btn primary" onClick={() => update('Pay armies', (d) => payArmies(d, true))}>Pay {total} BP</button>
+            <button className="btn" onClick={() => update('Don’t pay armies', (d) => payArmies(d, false))}>Don’t pay this month</button>
+            <button className="btn ghost" onClick={() => go('armies')}>Open armies</button>
+          </div>
+        </>
+      )}
+      {done && <p className="result">{done}</p>}
+      {routed.map((a) => (
+        <div key={a.id} className="stack">
+          <strong className="small">{a.name} routed and won’t fight until it rallies.</strong>
+          {k.turnState.done[`rally.${a.id}`]
+            ? <p className="small result">{k.turnState.done[`rally.${a.id}`] === 'rallied' ? 'Rallied: ready to fight.' : 'Failed to rally this turn.'}</p>
+            : <CheckRow k={k} attr="loyalty" label="Rally" onResolve={(r) => update(`Rally ${a.name}`, (d) => { rally(d, a.id, r); })} />}
+        </div>
+      ))}
+    </Step>
   );
 }

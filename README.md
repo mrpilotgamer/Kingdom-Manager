@@ -33,11 +33,17 @@ does the math, and walks your group through each kingdom turn.
   come from its buildings, the government type, and its size (Table 4–14, optional), with a breakdown of every source.
   Kingdom-wide values follow Expanding Settlement Modifiers. Fame and Infamy include starting values, famous buildings,
   settlement modifiers (each 10 points), events, and the Ruler's choice at Size 11, 26, 51, 101, and 201.
+- **Armies and mass combat**: recruit armies from 26 sample armies or build your own. ACR, hit points, OM, DV, and
+  Consumption come from the unit's CR, Hit Dice, and size, with resources (scaled by size and gated by buildings),
+  tactics, special abilities, and commanders with boons (kingdom leaders get their role's boons). Battles run phase by
+  phase: tactics, ranged, then melee with the strategy track, battlefield conditions, fortifications and siege engines,
+  routs and parting shots, withdrawing, and the aftermath (kingdom losses, commander fates, victory checks for new
+  tactics and boons, XP). The Upkeep phase pays armies, rallies routed ones, and heals armies at rest.
 - **Chronicle and Undo**: every change is logged, and the last 40 changes can be undone.
 - **Saving**: everything is stored in your browser. Export or import a kingdom as JSON to back it up or move it.
 - **Setup mode**: enter a kingdom you're already running, without paying for or logging every past building.
 
-Not in this version: mass combat, magic item slot rolls, and the optional rules (Fame/Infamy actions,
+Not in this version: magic item slot rolls, and the optional rules (Fame/Infamy actions,
 trade and diplomatic edicts, vassalage).
 
 ## Rules notes
