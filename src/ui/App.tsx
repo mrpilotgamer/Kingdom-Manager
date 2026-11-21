@@ -4,6 +4,7 @@ import { PHASES } from '../engine/turn';
 import { selectKingdom, undo, update, useApp, useUndo } from '../state/store';
 import { Crest } from './common';
 import { Armies } from './Armies';
+import { Diplomacy } from './Diplomacy';
 import { Leaders } from './Leaders';
 import { Log } from './Log';
 import { NewKingdom } from './NewKingdom';
@@ -19,6 +20,7 @@ const TABS: { id: Tab; label: string; hash: string }[] = [
   { id: 'settlements', label: 'Settlements', hash: 'settlements' },
   { id: 'territory', label: 'Territory', hash: 'territory' },
   { id: 'armies', label: 'Armies', hash: 'armies' },
+  { id: 'diplomacy', label: 'Diplomacy', hash: 'diplomacy' },
   { id: 'leaders', label: 'Leaders', hash: 'leaders' },
   { id: 'log', label: 'Chronicle', hash: 'chronicle' },
   { id: 'settings', label: 'Options', hash: 'options' },
@@ -106,6 +108,7 @@ export function App() {
           {tab === 'territory' && <Territory k={k} go={go} />}
           {tab === 'leaders' && <Leaders k={k} />}
           {tab === 'armies' && <Armies k={k} />}
+          {tab === 'diplomacy' && <Diplomacy k={k} />}
           {tab === 'log' && <Log k={k} />}
           {tab === 'settings' && <Settings k={k} onNew={() => setCreating(true)} />}
         </div>

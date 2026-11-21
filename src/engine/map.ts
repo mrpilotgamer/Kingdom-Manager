@@ -324,6 +324,7 @@ export function resizeSide(k: Kingdom, side: Side, n: number) {
     if (to) moved[to] = h;
   }
   for (const s of k.settlements) if (s.hexKey) s.hexKey = remap(s.hexKey) ?? undefined;
+  for (const a of k.armies ?? []) if (a.location) a.location = remap(a.location) ?? undefined;
   if (side === 'left') m.originC = (m.originC ?? 0) - shift;
   if (side === 'top') m.originR = (m.originR ?? 0) - shift;
   m.cols = newCols;

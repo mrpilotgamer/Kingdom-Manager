@@ -5,6 +5,8 @@ import {
   neighborKeys, parse, reconcileRivers, regenerate, removeImprovement, resizeSide, riverLinks, shrinkBlocked, SPECIALS, STATUS_LABEL,
   syncFromMap, unclaim, type Side,
 } from '../engine/map';
+import { armiesAt, hexArea, marchArmy, milesPerHex, placeArmy, travel } from '../engine/armyMap';
+import { armyStats } from '../engine/armies';
 import { CLIMATES, DEFAULT_GEN, randomSeed, RUGGED, SPECIAL_LEVELS, WATERS, type GenOptions } from '../engine/mapgen';
 import { log } from '../engine/actions';
 import { TERRAIN } from '../rules/kingdom';
@@ -36,6 +38,7 @@ export function HexMapView({ k, go }: { k: Kingdom; go: (tab: 'settlements') => 
   const [brush, setBrush] = useState<HexTerrain>('forest');
   const [statusBrush, setStatusBrush] = useState<HexStatus>('explored');
   const [selected, setSelected] = useState<string | null>(() => k.settlements.find((s) => s.hexKey)?.hexKey ?? null);
+  const [moving, setMoving] = useState<string | null>(null);
   const [zoom, setZoom] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 640 ? 2 : 0));
   const scrollRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewModeState] = useState<ViewMode>(loadView);
@@ -117,7 +120,15 @@ export function HexMapView({ k, go }: { k: Kingdom; go: (tab: 'settlements') => 
   const onDown = (e: PointerEvent<SVGSVGElement>) => {
     const hk = keyAt(e);
     if (!hk) return;
-    if (tool === 'select') { setSelected(hk); return; }
+    if (tool === 'select') {
+      if (moving) {
+        const id = moving;
+        update('March army', (d) => { marchArmy(d, id, hk); });
+        setMoving(null);
+      }
+      setSelected(hk);
+      return;
+    }
     (e.target as Element).releasePointerCapture?.(e.pointerId);
     setStroke({ keys: new Set([hk]), river: tool === 'river' ? !getHex(m, hk).river : undefined });
   };
@@ -285,6 +296,32 @@ export function HexMapView({ k, go }: { k: Kingdom; go: (tab: 'settlements') => 
                   </g>
                 );
               })}
+              {all.map((hk) => {
+                const here = armiesAt(k, hk).filter((a) => !(players && a.side === 'enemy' && view(hk).status === 'unexplored'));
+                if (!here.length) return null;
+                const [cx, cy] = center(...parse(hk));
+                const mine = here.filter((a) => a.side === 'kingdom').length, foes = here.length - mine;
+                const flag = (x: number, cls: string, n: number) => (
+                  <g key={cls}>
+                    <line x1={x} y1={cy + 2} x2={x} y2={cy + 16} className="pole" />
+                    <path d={`M${x} ${cy + 2} h11 l-3 4 l3 4 h-11 z`} className={cls} />
+                    {n > 1 && <text x={x + 6} y={cy + 9} className="flag-count">{n}</text>}
+                  </g>
+                );
+                return (
+                  <g key={`a${hk}`} className={moving && here.some((a) => a.id === moving) ? 'moving' : ''}>
+                    {mine > 0 && flag(cx - S * 0.62, 'flag-ours', mine)}
+                    {foes > 0 && flag(cx + S * 0.25, 'flag-foe', foes)}
+                  </g>
+                );
+              })}
+              {/* scale bar: one hex, flat side to flat side */}
+              <g className="scale" transform={`translate(${S * 0.3}, ${height - 6})`}>
+                <line x1={0} y1={0} x2={H} y2={0} />
+                <line x1={0} y1={-4} x2={0} y2={4} />
+                <line x1={H} y1={-4} x2={H} y2={4} />
+                <text x={H / 2} y={-6}>{milesPerHex(m)} mi</text>
+              </g>
               {selected && (() => {
                 const [c, r] = parse(selected);
                 if (c >= m.cols || r >= m.rows) return null;
@@ -333,7 +370,13 @@ export function HexMapView({ k, go }: { k: Kingdom; go: (tab: 'settlements') => 
           </Panel>
         )}
         {tool === 'generate' && <GeneratePanel k={k} onDone={(capital) => { if (capital) setSelected(capital); setTool('select'); }} />}
-        {tool === 'select' && (selected ? <HexPanel k={k} hk={selected} go={go} players={players} /> : (
+        {moving && tool === 'select' && (
+          <div className="callout info row">
+            <span style={{ flex: 1 }}>Choose where {k.armies?.find((a) => a.id === moving)?.name} marches: tap a hex on the map.</span>
+            <button className="btn sm ghost" onClick={() => setMoving(null)}>Cancel</button>
+          </div>
+        )}
+        {tool === 'select' && (selected ? <HexPanel k={k} hk={selected} go={go} players={players} onMove={setMoving} /> : (
           <Panel title="Select a hex"><p className="muted">Tap a hex to see it, claim it, or build on it.</p></Panel>
         ))}
       </div>
@@ -350,7 +393,7 @@ function Legend() {
           {HEX_TERRAIN[t]}
         </span>
       ))}
-      <span className="muted">Red line: your border · Hatched: unexplored · Pale: explored but not cleared · ◆ special site</span>
+      <span className="muted">Red line: your border · Hatched: unexplored · Pale: explored but not cleared · ◆ special site · Flags: your armies and the enemy’s</span>
     </div>
   );
 }
@@ -365,7 +408,7 @@ function MapSize({ k, onShift }: { k: Kingdom; onShift: (side: Side, n: number) 
   const size = horizontal ? m.cols : m.rows;
   const unit = horizontal ? (n === 1 ? 'column' : 'columns') : n === 1 ? 'row' : 'rows';
   const blocked = shrinkBlocked(m, side, n);
-  const ids = { side: useId('ms'), n: useId('ms') };
+  const ids = { side: useId('ms'), n: useId('ms'), scale: useId('ms') };
   const go = (delta: number) => {
     update(`${delta > 0 ? 'Add' : 'Remove'} ${unit}`, (d) => { resizeSide(d, side, delta); });
     onShift(side, delta);
@@ -383,6 +426,10 @@ function MapSize({ k, onShift }: { k: Kingdom; onShift: (side: Side, n: number) 
       <button className="btn sm" disabled={size - n < 4 || blocked} onClick={() => go(-n)}
         title={blocked ? 'That would cut off claimed hexes' : undefined}>Remove</button>
       {blocked && <span className="muted">Can't remove: claimed hexes are there.</span>}
+      <span className="spacer" />
+      <label htmlFor={ids.scale} className="muted">Hexes are</label>
+      <input id={ids.scale} type="number" min={1} max={100} value={milesPerHex(m)} onChange={(e) => update('Change map scale', (d) => { d.map!.milesPerHex = Math.max(1, Number(e.target.value) || 12); })} />
+      <span className="muted">miles across (≈{hexArea(milesPerHex(m)).toLocaleString()} sq mi each)</span>
     </div>
   );
 }
@@ -446,7 +493,50 @@ export function GenOptionsForm({ value, onChange }: { value: GenOptions; onChang
   );
 }
 
-function HexPanel({ k, hk, go, players }: { k: Kingdom; hk: string; go: (tab: 'settlements') => void; players: boolean }) {
+function HexArmies({ k, hk, players, onMove }: { k: Kingdom; hk: string; players: boolean; onMove: (id: string) => void }) {
+  const m = k.map!;
+  const here = armiesAt(k, hk).filter((a) => !(players && a.side === 'enemy' && getHex(m, hk).status === 'unexplored'));
+  const others = (k.armies ?? []).filter((a) => a.location !== hk && a.status !== 'defeated' && a.status !== 'disbanded');
+  const [pick, setPick] = useState('');
+  const id = useId('ha');
+  const chosen = others.find((a) => a.id === pick);
+  const est = chosen?.location ? travel(k, chosen, chosen.location, hk) : null;
+  if (!here.length && !others.length) return null;
+  return (
+    <Panel title="Armies">
+      {here.length === 0 && <p className="small muted">No armies here. Any number of armies can share a hex.</p>}
+      {here.map((a) => {
+        const st = armyStats(a);
+        return (
+          <div key={a.id} className="row small">
+            <span className={`chip ${a.side === 'enemy' ? 'bad' : 'ok'}`}>{a.side === 'enemy' ? 'Enemy' : 'Yours'}</span>
+            <strong style={{ flex: 1, minWidth: 0 }}>{a.name}</strong>
+            <span className="num muted">ACR {st.acrLabel} · hp {a.hp}/{st.hpMax}{a.status === 'routed' ? ' · routed' : ''}</span>
+            <button className="btn sm" onClick={() => onMove(a.id)}>March</button>
+            <button className="btn sm ghost" onClick={() => update('Take army off map', (d) => placeArmy(d, a.id, undefined))}>Off map</button>
+          </div>
+        );
+      })}
+      {others.length > 0 && (
+        <div className="row">
+          <label className="field" htmlFor={id} style={{ flex: 1, minWidth: 160 }}>Bring an army here
+            <select id={id} value={pick} onChange={(e) => setPick(e.target.value)}>
+              <option value="">Choose an army</option>
+              {others.map((a) => <option key={a.id} value={a.id}>{a.name}{a.side === 'enemy' ? ' (enemy)' : ''}{a.location ? '' : ' (not on the map)'}</option>)}
+            </select>
+          </label>
+          <button className="btn sm" style={{ alignSelf: 'flex-end' }} disabled={!chosen} onClick={() => {
+            update(chosen!.location ? 'March army' : 'Station army', (d) => { if (chosen!.location) marchArmy(d, chosen!.id, hk); else placeArmy(d, chosen!.id, hk); });
+            setPick('');
+          }}>{chosen?.location ? 'March here' : 'Station here'}</button>
+        </div>
+      )}
+      {est && <p className="small muted">{est.hexes} hex{est.hexes === 1 ? '' : 'es'} ({est.miles} miles), about {est.days} day{est.days === 1 ? '' : 's'} at speed {chosen!.speed}{est.difficult ? `; ${est.difficult} through difficult terrain at half speed` : ''}{est.water ? '. The straight route crosses water: it will need boats or a way around.' : '.'}</p>}
+    </Panel>
+  );
+}
+
+function HexPanel({ k, hk, go, players, onMove }: { k: Kingdom; hk: string; go: (tab: 'settlements') => void; players: boolean; onMove: (id: string) => void }) {
   const m = k.map!;
   const h = getHex(m, hk);
   const [c, r] = parse(hk);
@@ -580,6 +670,7 @@ function HexPanel({ k, hk, go, players }: { k: Kingdom; hk: string; go: (tab: 's
         </Panel>
       )}
 
+      <HexArmies k={k} hk={hk} players={players} onMove={onMove} />
       {!secret && <Panel title="Edit hex">
         <label className="field" htmlFor={ids.name}>Name
           <input id={ids.name} type="text" value={h.name ?? ''} placeholder={coordLabel(c, r)} onChange={(e) => edit('Rename hex', (x) => { x.name = e.target.value || undefined; })} />

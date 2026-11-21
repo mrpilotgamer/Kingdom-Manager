@@ -5,6 +5,7 @@ import {
 } from '../rules/kingdom';
 import { ROLES, type RoleId } from '../rules/leadership';
 import type { Kingdom, Settlement } from '../state/types';
+import { embassyBonuses, foreignBonuses } from './specialEdicts';
 import { GOVERNMENTS, RENOWN_SIZES, SETTLEMENT_STATS, sizeModifier, type SettlementStat } from '../rules/settlement';
 
 export interface Line { label: string; value: number }
@@ -69,7 +70,7 @@ export function computeStats(k: Kingdom): KingdomStats {
     const l = k.leaders[role.id];
     if (leaderFilled(k, role.id) && l) {
       const base = role.half ? Math.floor(l.mod / 2) : l.mod;
-      const v = base + (l.leadershipFeat ? 1 : 0);
+      const v = base + (l.leadershipFeat ? 1 : 0) + (k.settings.roleSkills ? Math.floor((l.skillRanks ?? 0) / 5) : 0);
       if (role.attr === 'choice') {
         const n = role.id === 'ruler' ? rulerCount : 1;
         const chosen = (l.attrs.length ? l.attrs : ['economy' as Attr]).slice(0, n);
@@ -112,12 +113,25 @@ export function computeStats(k: Kingdom): KingdomStats {
   for (const s of k.settlements) {
     districts += s.districts.length;
     const sum = { economy: 0, loyalty: 0, stability: 0 };
-    for (const id of allBuildings(s)) {
-      const b = BUILDING_BY_ID[id];
-      if (!b) continue;
-      for (const a of ATTRS) sum[a] += b[a] ?? 0;
+    const holy = { economy: 0, loyalty: 0, stability: 0 };
+    for (const d of s.districts) {
+      for (const pb of d.buildings) {
+        if (pb.damaged) continue;
+        const b = BUILDING_BY_ID[pb.type];
+        if (!b) continue;
+        const deity = k.settings.deities && pb.deity ? deityBonus(pb.type, pb.deity) : null;
+        for (const a of ATTRS) {
+          if (deity) holy[a] += deity[a];
+          else sum[a] += b[a] ?? 0;
+        }
+      }
+      for (const id of d.improvements) {
+        const b = BUILDING_BY_ID[id];
+        if (b) for (const a of ATTRS) sum[a] += b[a] ?? 0;
+      }
     }
     for (const a of ATTRS) add(a, `Buildings in ${s.name}`, sum[a]);
+    for (const a of ATTRS) add(a, `Holy sites in ${s.name}`, holy[a]);
   }
 
   // Terrain improvements and special terrain
@@ -138,6 +152,14 @@ export function computeStats(k: Kingdom): KingdomStats {
   add('stability', 'Lairs', f('lair'));
   add('economy', 'Rivers (1 per 4 hexes)', Math.floor(f('river') / 4));
   add('stability', 'Rivers (1 per 8 hexes)', Math.floor(f('river') / 8));
+
+  // Treaties, alliances, and embassies abroad
+  for (const b of foreignBonuses(k)) add(b.attr, b.label, b.value);
+  const emb = embassyBonuses(k);
+  add('economy', 'Embassies abroad', emb.economy);
+  add('loyalty', 'Embassies abroad', emb.loyalty);
+  add('stability', 'Embassies abroad', emb.stability);
+  add('consumption', 'Embassies abroad', emb.consumption);
 
   // Consumption
   add('consumption', 'Kingdom Size', k.size);
@@ -163,6 +185,7 @@ export function computeStats(k: Kingdom): KingdomStats {
   }
   const fameLines: Line[] = [], infamyLines: Line[] = [];
   if (k.fame) fameLines.push({ label: 'Starting value and events', value: k.fame });
+  if (emb.fame) fameLines.push({ label: 'Noble Villa embassies', value: emb.fame });
   if (fameFromBuildings) fameLines.push({ label: 'Famous buildings', value: fameFromBuildings });
   const loreSociety = Math.floor(Math.max(0, totals.lore + totals.society) / 10);
   if (loreSociety) fameLines.push({ label: `Settlements’ Lore + Society (${totals.lore + totals.society}) ÷ 10`, value: loreSociety });
@@ -293,6 +316,8 @@ export function kingdomSettlementModifiers(k: Kingdom): SettlementMods {
   al.lore = (a.law === 'neutral' ? 1 : 0) + (a.moral === 'neutral' ? 1 : 0);
   addMods(r, `Alignment (${alignmentLabel(a)})`, al);
   for (const adj of k.settlementAdjustments ?? []) if (!adj.settlementId) addMods(r, adj.label, adj.mods);
+  const emb = embassyBonuses(k);
+  if (emb.society) addMods(r, 'Embassies abroad', { society: emb.society });
   return r;
 }
 
@@ -300,3 +325,22 @@ export function kingdomSettlementModifiers(k: Kingdom): SettlementMods {
 export function renownDue(k: Kingdom) {
   return RENOWN_SIZES.filter((n) => k.size >= n && !(k.renownAwarded ?? []).includes(n));
 }
+
+/**
+ * Deities and Holy Sites (optional): a Temple gives +2 per alignment component of its god (Chaotic/Good Loyalty,
+ * Lawful/Evil Economy, each Neutral Stability), a Cathedral +4; a Shrine gives +1 to one of those attributes.
+ */
+export function deityBonus(type: string, deity: { alignment: string; attr?: Attr }): Record<Attr, number> {
+  const r = { economy: 0, loyalty: 0, stability: 0 };
+  const al = deity.alignment === 'N' ? 'NN' : deity.alignment;
+  const parts: Attr[] = [...al].map((ch) => (ch === 'C' || ch === 'G' ? 'loyalty' : ch === 'L' || ch === 'E' ? 'economy' : 'stability'));
+  if (type === 'shrine') {
+    const attr = deity.attr && parts.includes(deity.attr) ? deity.attr : parts[0];
+    r[attr] += 1;
+    return r;
+  }
+  const per = type === 'cathedral' ? 4 : 2;
+  for (const p of parts) r[p] += per;
+  return r;
+}
+export const HOLY_BUILDINGS = ['shrine', 'temple', 'cathedral'];

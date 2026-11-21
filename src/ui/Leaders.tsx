@@ -24,13 +24,13 @@ export function Leaders({ k }: { k: Kingdom }) {
       <div className="table-wrap">
         <table className="list">
           <thead>
-            <tr><th>Role</th><th>Leader</th><th>Mod</th><th>Leadership feat</th><th>On duty</th><th>Effect now</th></tr>
+            <tr><th>Role</th><th>Leader</th><th>Mod</th>{k.settings.roleSkills && <th>Skill ranks</th>}<th>Leadership feat</th><th>On duty</th><th>Effect now</th></tr>
           </thead>
           <tbody>
             {ROLES.map((role) => {
               const l = k.leaders[role.id];
               const filled = leaderFilled(k, role.id);
-              const value = l ? (role.half ? Math.floor(l.mod / 2) : l.mod) + (l.leadershipFeat ? 1 : 0) : 0;
+              const value = l ? (role.half ? Math.floor(l.mod / 2) : l.mod) + (l.leadershipFeat ? 1 : 0) + (k.settings.roleSkills ? Math.floor((l.skillRanks ?? 0) / 5) : 0) : 0;
               const nAttrs = role.id === 'ruler' ? st.rulerAttrCount : 1;
               const attrs = (l?.attrs.length ? l.attrs : ['economy' as Attr]).slice(0, nAttrs);
               return (
@@ -48,6 +48,13 @@ export function Leaders({ k }: { k: Kingdom }) {
                       onChange={(e) => edit(role, (x) => { x.mod = Number(e.target.value) || 0; })} />
                     <div className="small muted">{role.ability}{role.half ? ' (half)' : ''}</div>
                   </td>
+                  {k.settings.roleSkills && (
+                    <td>
+                      <input type="number" min={0} aria-label={`${role.name} ${role.skill} ranks`} value={l?.skillRanks ?? 0}
+                        onChange={(e) => edit(role, (x) => { x.skillRanks = Math.max(0, Number(e.target.value) || 0); })} />
+                      <div className="small muted">{role.skill} (+1 per 5)</div>
+                    </td>
+                  )}
                   <td>
                     <input type="checkbox" aria-label={`${role.name} has Leadership`} checked={!!l?.leadershipFeat}
                       onChange={(e) => edit(role, (x) => { x.leadershipFeat = e.target.checked; })} />

@@ -98,6 +98,8 @@ export function sampleKingdom(): Kingdom {
   const raiders = fromPreset(presetByName('Orc horde')!, 'enemy');
   raiders.name = 'Tusk Moon raiders';
   raiders.history.push({ turn: 4, text: 'Spotted in the hills to the south.' });
+  guard.location = key(7, 5);
+  raiders.location = key(8, 9);
   k.armies = [guard, raiders];
   k.map = sampleMap();
   k.settlements = [{ id: uid(), name: 'Greyford', terrain: 'plains', districts: [d], hexKey: key(7, 5) }];

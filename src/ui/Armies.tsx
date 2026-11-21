@@ -4,6 +4,7 @@ import {
   leadership, maxBoons, recruit, removeResource, reserveCapacity, resourceAllowed, resourceCost, rest,
 } from '../engine/armies';
 import { leaderFilled } from '../engine/stats';
+import { hexName } from '../engine/map';
 import {
   ARMY_SIZES, BOONS, CR_LADDER, crLabel, HD_AVG, LEARNABLE_TACTICS, PRESETS, RESOURCES, ROLE_BOONS, SIZE_INFO, SPECIALS,
   TACTICS, type ArmySize, type BoonId, type HitDie, type ResourceId, type SpecialId, type TacticId,
@@ -129,6 +130,7 @@ export function ArmyCard({ k, a }: { k: Kingdom; a: Army }) {
         <h3 style={{ flex: 1, minWidth: 0 }}>{a.name}</h3>
         {a.status !== 'ready' && <span className={`chip ${a.status === 'routed' ? 'warn' : 'bad'}`}>{a.status === 'routed' ? 'Routed' : a.status === 'defeated' ? 'Destroyed' : 'Deserted'}</span>}
         {reserveName && <span className="chip">Reserve: {reserveName}</span>}
+        {a.location && k.map && !reserveName && <span className="chip">{hexName(k.map, a.location)}</span>}
         {a.unpaid && <span className="chip bad">Unpaid</span>}
       </div>
       <p className="small muted">{a.alignment} {SIZE_INFO[a.size].label} army of {a.type} · {st.units.toLocaleString()} units</p>

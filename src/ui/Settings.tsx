@@ -75,6 +75,15 @@ export function Settings({ k, onNew }: { k: Kingdom; onNew: () => void }) {
           <input type="checkbox" checked={k.settings.itemSources === 'all'} onChange={(e) => update('Change item sources', (d) => { d.settings.itemSources = e.target.checked ? 'all' : 'core'; })} />
           <span><strong>Magic items from every Pathfinder book</strong> <span className="small muted">— off: wondrous items, rings, and staves come from the Core Rulebook. Potions, scrolls, and wands use spells from all books either way.</span></span>
         </label>
+        <h3>Optional rules</h3>
+        <label className="check">
+          <input type="checkbox" checked={!!k.settings.roleSkills} onChange={(e) => update('Toggle role skills', (d) => { d.settings.roleSkills = e.target.checked; })} />
+          <span><strong>Leadership role skills</strong> <span className="small muted">— each leader adds +1 per 5 ranks in their role’s skill (e.g. General: Profession (soldier)).</span></span>
+        </label>
+        <label className="check">
+          <input type="checkbox" checked={!!k.settings.deities} onChange={(e) => update('Toggle deities', (d) => { d.settings.deities = e.target.checked; })} />
+          <span><strong>Deities and holy sites</strong> <span className="small muted">— Shrines, Temples, and Cathedrals give bonuses based on their god’s alignment. Set the god on each building.</span></span>
+        </label>
         <label className="check">
           <input type="checkbox" checked={k.settings.diagonalAdjacency} onChange={(e) => update('Toggle diagonal adjacency', (d) => { d.settings.diagonalAdjacency = e.target.checked; })} />
           <span><strong>Diagonal lots count as adjacent</strong> <span className="small muted">— the rules don't say; many GMs allow it.</span></span>

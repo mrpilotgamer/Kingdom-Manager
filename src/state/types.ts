@@ -18,6 +18,8 @@ export interface PlacedBuilding {
   damaged?: boolean;
   /** Magic items for sale, by the building's slot index (null = open slot). */
   items?: (MagicItem | null)[];
+  /** Shrines, Temples, Cathedrals: the god's alignment (optional Deities and Holy Sites rule). */
+  deity?: { name?: string; alignment: string; attr?: Attr };
 }
 
 export interface MagicItem {
@@ -86,6 +88,8 @@ export interface HexMap {
   originR?: number;
   /** Generator settings, if the map was generated. */
   gen?: GenParams;
+  /** Width of a hex across its flat sides, in miles (Ultimate Campaign uses 12). */
+  milesPerHex?: number;
 }
 
 export interface Leader {
@@ -93,6 +97,8 @@ export interface Leader {
   /** The ability modifier used for this role (the higher of the two listed). */
   mod: number;
   leadershipFeat: boolean;
+  /** Ranks in the role's skill (optional Leadership Role Skills rule: +1 per 5 ranks). */
+  skillRanks?: number;
   /** Ruler: up to three attributes; Spymaster: one. */
   attrs: Attr[];
   /** False if the leader skipped their 7 days of duty this month (counts as vacant). */
@@ -196,10 +202,61 @@ export interface Army {
   status: 'ready' | 'routed' | 'defeated' | 'disbanded';
   /** Settlement id when held in reserve (paid monthly instead of weekly). */
   reserve?: string;
+  /** Map hex the army is in ("col,row"). Any number of armies can share a hex. */
+  location?: string;
   /** Behind on Consumption: Morale −2 until paid. */
   unpaid?: boolean;
   lastBattleTurn?: number;
   history: { turn: number; text: string }[];
+}
+
+/** Another kingdom your kingdom deals with (optional Diplomatic, Trade, and Vassalage edicts). */
+export interface ForeignKingdom {
+  id: string;
+  name: string;
+  /** e.g. "LG", "N" */
+  alignment: string;
+  size: number;
+  /** Their Economy and Stability (for an NPC kingdom, estimate 2d6 + Size). */
+  economy: number;
+  stability: number;
+  attitude: 'hostile' | 'unfriendly' | 'indifferent' | 'friendly' | 'helpful';
+  relation: 'none' | 'embassy' | 'treaty' | 'alliance';
+  /** Who the terms favor. */
+  treaty?: 'balanced' | 'ours' | 'theirs';
+  alliance?: 'balanced' | 'ours' | 'theirs';
+  /** You keep a Mansion or Noble Villa there as your embassy. */
+  embassyBuilding?: 'mansion' | 'noble-villa';
+  /** Turn before which a failed attempt can't be repeated. */
+  cooldown?: Partial<Record<'embassy' | 'treaty' | 'alliance' | 'threat', number>>;
+  vassal?: { mode: 'colony' | 'subjugated'; viceroy: string; peaceStreak: number; settled: boolean; grant: number };
+  notes?: string;
+}
+
+export interface TradeRoute {
+  id: string;
+  partner: string;
+  settlementId: string;
+  type: 'food' | 'goods' | 'luxuries' | 'raw';
+  /** Trade Route Length. */
+  trl: number;
+  invested: number;
+  startedTurn: number;
+  arrivesTurn: number;
+  status: 'travelling' | 'active' | 'failed';
+  establishedTurn?: number;
+  expiresTurn?: number;
+  economy?: number;
+}
+
+export interface Expedition {
+  id: string;
+  months: number;
+  cost: number;
+  note: string;
+  startedTurn: number;
+  returnsTurn: number;
+  status: 'out' | 'returned' | 'scattered' | 'lost';
 }
 
 /** An event that carries over between turns. */
@@ -263,6 +320,9 @@ export interface Kingdom {
   armies?: Army[];
   /** The battle being fought, if any. */
   battle?: Battle;
+  foreign?: ForeignKingdom[];
+  tradeRoutes?: TradeRoute[];
+  expeditions?: Expedition[];
   modifiers: Modifier[];
   log: LogEntry[];
   /** Ongoing events (continuous, or lasting until the next Event phase). Missing on older saves. */
@@ -273,7 +333,7 @@ export interface Kingdom {
   nextUpkeep?: { multiplier: number; add: number; labels: string[] };
   turnState: TurnState;
   eventLastTurn: boolean;
-  settings: { districtsAddConsumption: boolean; diagonalAdjacency: boolean; setupMode: boolean; permanentEventEffects?: boolean; settlementSizeMods?: boolean; itemSources?: 'core' | 'all' };
+  settings: { districtsAddConsumption: boolean; diagonalAdjacency: boolean; setupMode: boolean; permanentEventEffects?: boolean; settlementSizeMods?: boolean; itemSources?: 'core' | 'all'; roleSkills?: boolean; deities?: boolean };
   createdAt: number;
   updatedAt: number;
 }

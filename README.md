@@ -39,6 +39,13 @@ does the math, and walks your group through each kingdom turn.
   phase: tactics, ranged, then melee with the strategy track, battlefield conditions, fortifications and siege engines,
   routs and parting shots, withdrawing, and the aftermath (kingdom losses, commander fates, victory checks for new
   tactics and boons, XP). The Upkeep phase pays armies, rallies routed ones, and heals armies at rest.
+- **Armies on the map**: station and march armies on the hex map (any number can share a hex), with travel time from
+  the army's speed (difficult terrain halves it, roads don't). Battles can start from a hex where both sides meet,
+  using the town's Defense if it's yours. The map shows a scale bar; hexes are 12 miles across by default (adjustable).
+- **Optional rules**: special edicts (Diplomatic: embassies, treaties, and alliances with the DC formula and their
+  Economy and Stability bonuses, by Diplomacy or threats; Exploration expeditions; Trade routes with the settlement-based
+  DC, three checks, and year-long Economy bonuses by goods type; Vassalage for colonies and subjugated kingdoms, which can
+  also be run as their own kingdoms), Leadership Role Skills, and Deities and Holy Sites.
 - **Settlement magic items**: every building's item slots (e.g. "1 minor potion or wondrous item") are tracked per
   settlement. Each Upkeep phase rolls d% per district to stock an open slot with a real item no pricier than the base
   value: potions, scrolls, and wands priced by the Core Rulebook formulas, generic +1 to +5 arms and armor, and named
@@ -49,8 +56,7 @@ does the math, and walks your group through each kingdom turn.
 - **Saving**: everything is stored in your browser. Export or import a kingdom as JSON to back it up or move it.
 - **Setup mode**: enter a kingdom you're already running, without paying for or logging every past building.
 
-Not in this version: the optional rules (Fame/Infamy actions,
-trade and diplomatic edicts, vassalage).
+Not in this version: independence and unification, and abandoned buildings.
 
 ## Rules notes
 

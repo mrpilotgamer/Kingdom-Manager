@@ -305,3 +305,14 @@ table.list td { padding: 8px; border-bottom: 1px solid var(--line); vertical-ali
 .item-head:hover .item-name strong { text-decoration: underline; }
 .item-slot { text-transform: none; }
 .item-name { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+
+/* Map armies and scale */
+.hexmap .pole { stroke: var(--ink); stroke-width: 1.2; }
+.hexmap .flag-ours { fill: var(--accent); stroke: var(--surface); stroke-width: 0.8; }
+.hexmap .flag-foe { fill: var(--danger); stroke: var(--surface); stroke-width: 0.8; }
+.hexmap .flag-count { font-size: 7px; font-weight: 700; fill: var(--surface); stroke-width: 0; }
+.hexmap .moving .flag-ours, .hexmap .moving .flag-foe { stroke: var(--gold); stroke-width: 2; }
+.hexmap .scale line { stroke: var(--ink); stroke-width: 1.5; }
+.hexmap .scale text { font-size: 9px; font-weight: 700; }
+input.ok-input { border-color: var(--ok); }
+input.bad-input { border-color: var(--danger); }

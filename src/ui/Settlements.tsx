@@ -5,7 +5,8 @@ import {
 } from '../engine/actions';
 import { buildCost, upgradeCost } from '../engine/costs';
 import { checkPlacement, districtIssues, footprint, lotKey, occupancy, SIDE_LABEL, type Orientation } from '../engine/grid';
-import { computeStats, fmt, settlementStats } from '../engine/stats';
+import { computeStats, deityBonus, fmt, HOLY_BUILDINGS, settlementStats } from '../engine/stats';
+import type { Attr } from '../rules/kingdom';
 import { coordLabel, parse } from '../engine/map';
 import { building, BUILDINGS, CATEGORY_LABEL, type BuildingDef, type Category } from '../rules/buildings';
 import { TERRAIN, type Terrain } from '../rules/kingdom';
@@ -302,6 +303,7 @@ function BuildingDetail({ k, s, b, issues, onClose, onUpgrade, onDemolish }: {
         {rows.filter(([, v]) => v).map(([l, v]) => <tr key={l}><td style={{ width: '6.5em', verticalAlign: 'top' }}><strong>{l}</strong></td><td style={{ textAlign: 'left', fontWeight: 400, width: 'auto' }}>{v}</td></tr>)}
       </tbody></table>
       {issues.map((i) => <p key={i} className="callout">{i}</p>)}
+      {k.settings.deities && HOLY_BUILDINGS.includes(def.id) && <DeityPicker s={s} b={b} />}
       {b.damaged && (
         <div className="callout bad row">
           <span style={{ flex: 1 }}>Damaged: it gives no benefits until repaired for half its cost.</span>
@@ -428,5 +430,46 @@ function DistrictControls({ k, s, d }: { k: Kingdom; s: Settlement; d: District 
         ))}
       </div>
     </Panel>
+  );
+}
+
+const ALIGN_ABBR = ['LG', 'NG', 'CG', 'LN', 'N', 'CN', 'LE', 'NE', 'CE'];
+function DeityPicker({ s, b }: { s: Settlement; b: PlacedBuilding }) {
+  const ids = { n: useId('dp'), a: useId('dp'), t: useId('dp') };
+  const edit = (fn: (d: NonNullable<PlacedBuilding['deity']>) => void) => update('Set deity', (dk) => {
+    const pb = dk.settlements.find((x) => x.id === s.id)!.districts.flatMap((d) => d.buildings).find((x) => x.id === b.id)!;
+    pb.deity ??= { alignment: 'N' };
+    fn(pb.deity);
+  });
+  const deity = b.deity;
+  const bonus = deity ? deityBonus(b.type, deity) : null;
+  const options = deity ? [...new Set([...(deity.alignment === 'N' ? 'NN' : deity.alignment)].map((ch) => (ch === 'C' || ch === 'G' ? 'loyalty' : ch === 'L' || ch === 'E' ? 'economy' : 'stability')))] : [];
+  return (
+    <div className="stack">
+      <h3>Patron deity</h3>
+      <div className="row">
+        <label className="field" htmlFor={ids.n} style={{ flex: 1, minWidth: 120 }}>Deity
+          <input id={ids.n} type="text" value={deity?.name ?? ''} placeholder="Unnamed" onChange={(e) => edit((d) => { d.name = e.target.value || undefined; })} />
+        </label>
+        <label className="field" htmlFor={ids.a}>Alignment
+          <select id={ids.a} value={deity?.alignment ?? ''} onChange={(e) => {
+            const v = e.target.value;
+            if (!v) update('Clear deity', (dk) => { delete dk.settlements.find((x) => x.id === s.id)!.districts.flatMap((d) => d.buildings).find((x) => x.id === b.id)!.deity; });
+            else edit((d) => { d.alignment = v; d.attr = undefined; });
+          }}>
+            <option value="">Standard bonuses</option>
+            {ALIGN_ABBR.map((a) => <option key={a} value={a}>{a}</option>)}
+          </select>
+        </label>
+        {b.type === 'shrine' && deity && options.length > 1 && (
+          <label className="field" htmlFor={ids.t}>Blessing
+            <select id={ids.t} value={deity.attr ?? options[0]} onChange={(e) => edit((d) => { d.attr = e.target.value as Attr; })}>
+              {options.map((o) => <option key={o} value={o}>{o[0].toUpperCase() + o.slice(1)} +1</option>)}
+            </select>
+          </label>
+        )}
+      </div>
+      {bonus && <p className="small muted">Instead of its usual bonuses: {(['economy', 'loyalty', 'stability'] as const).filter((a) => bonus[a]).map((a) => `${a[0].toUpperCase() + a.slice(1)} +${bonus[a]}`).join(', ')}.</p>}
+    </div>
   );
 }

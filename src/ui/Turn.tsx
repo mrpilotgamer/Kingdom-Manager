@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { log, loseHex } from '../engine/actions';
 import { activeArmies, armyUpkeepTotal, payArmies, rally } from '../engine/armies';
 import { fillSlots } from '../engine/magicItems';
+import { subjugationCheck } from '../engine/specialEdicts';
 import { computeStats } from '../engine/stats';
 import {
   collectTaxes, deposit, endTurn, eventChance, modifyUnrest, payConsumption, PHASES, resolveStability, rollEvents,
@@ -14,7 +15,7 @@ import { CheckRow, Panel, useId } from './common';
 import { AddEventForm, OngoingEventCard, RolledLine } from './Events';
 import { Edicts } from './Overview';
 
-export type Tab = 'overview' | 'turn' | 'settlements' | 'territory' | 'armies' | 'leaders' | 'log' | 'settings';
+export type Tab = 'overview' | 'turn' | 'settlements' | 'territory' | 'armies' | 'diplomacy' | 'leaders' | 'log' | 'settings';
 
 function Step({ n, title, done, children }: { n: number; title: string; done?: string; children?: ReactNode }) {
   return (
@@ -84,6 +85,12 @@ function Upkeep({ k, go }: { k: Kingdom; go: (t: Tab) => void }) {
         <div><button className="btn primary" onClick={() => update('Pay Consumption', payConsumption)}>Pay {st.consumption} BP</button></div>
       </Step>
       <ArmyUpkeep k={k} go={go} n={3} />
+      {(k.foreign ?? []).filter((f) => f.vassal?.mode === 'subjugated' && !f.vassal.settled).map((f) => (
+        <Step key={f.id} n={3} title={`Hold ${f.name}`} done={k.turnState.done[`subjugation.${f.id}`] ? `Checked this turn (${f.vassal!.peaceStreak}/3 in a row).` : undefined}>
+          <p className="small">Subjugated kingdoms need a Loyalty check each Upkeep, {Math.floor(f.size / 5)} harder for its Size. Failure: Unrest +1d4. Three successes in a row bring peace.</p>
+          <CheckRow k={k} attr="loyalty" bonus={-Math.floor(f.size / 5)} label="Check" onResolve={(r) => update(`Hold ${f.name}`, (d) => { subjugationCheck(d, f.id, r); })} />
+        </Step>
+      ))}
       <Step n={3 + a} title="Fill vacant magic item slots" done={done['upkeep.items']}>
         <p className="small">Each district with an open slot rolls d%: on 51–100 one of its open slots gets an item no pricier than the settlement’s base value.</p>
         <div className="row">
@@ -147,6 +154,12 @@ function EdictPhase({ k, go }: { k: Kingdom; go: (t: Tab) => void }) {
       </Step>
       <Step n={6} title="Issue edicts">
         <Edicts k={k} />
+      </Step>
+      <Step n={7} title="Special edict (optional)" done={k.turnState.done['edict.special']}>
+        <p className="small">One Diplomatic, Exploration, Trade, or Vassalage edict per turn.
+          {(k.tradeRoutes ?? []).some((r) => r.status === 'travelling' && r.arrivesTurn <= k.turn) ? ' Traders have reached their destination.' : ''}
+          {(k.expeditions ?? []).some((e) => e.status === 'out' && e.returnsTurn <= k.turn) ? ' Explorers are back.' : ''}</p>
+        <div><button className="btn" onClick={() => go('diplomacy')}>Open diplomacy</button></div>
       </Step>
     </div>
   );

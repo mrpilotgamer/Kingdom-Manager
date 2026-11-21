@@ -5,6 +5,8 @@ import {
   type BattleArmy, type Conditions, type Order, type Side,
 } from '../engine/battle';
 import { settlementStats } from '../engine/stats';
+import { armiesAt } from '../engine/armyMap';
+import { hexName } from '../engine/map';
 import { die } from '../engine/dice';
 import { BOONS, LEARNABLE_TACTICS, STRATEGIES, TACTICS, WIND, type BoonId, type TacticId } from '../rules/massCombat';
 import { update } from '../state/store';
@@ -23,7 +25,18 @@ export function BattleSetupPanel({ k, onDone }: { k: Kingdom; onDone: () => void
   const [fortSource, setFortSource] = useState('');
   const [fortValue, setFortValue] = useState(8);
   const [pcs, setPcs] = useState(0);
-  const ids = Object.fromEntries(['n', 'l', 'w', 'at', 'ad', 'fs', 'fv', 'fx', 'pc'].map((x) => [x, useId(`bs-${x}`)]));
+  const ids = Object.fromEntries(['n', 'l', 'w', 'at', 'ad', 'fs', 'fv', 'fx', 'pc', 'wh'].map((x) => [x, useId(`bs-${x}`)]));
+  // Hexes where your armies and enemy armies stand together.
+  const contested = k.map ? [...new Set(ours.map((a) => a.location).filter((h): h is string => !!h && foes.some((f) => f.location === h)))] : [];
+  const [where, setWhere] = useState('');
+  const chooseWhere = (hk: string) => {
+    setWhere(hk);
+    if (!hk) return;
+    setPick(Object.fromEntries([...ours, ...foes].map((a) => [a.id, a.location === hk])));
+    const town = k.settlements.find((x) => x.hexKey === hk);
+    if (town) { setFortSide('kingdom'); setFortSource(town.id); }
+    if (!name) setName(`Battle of ${hexName(k.map!, hk).replace(/^hex /, '')}`);
+  };
   const settlementDefense = (id: string) => {
     const s = k.settlements.find((x) => x.id === id);
     return s ? settlementStats(s).defense : 0;
@@ -33,6 +46,14 @@ export function BattleSetupPanel({ k, onDone }: { k: Kingdom; onDone: () => void
   const ready = chosen('kingdom').length > 0 && chosen('enemy').length > 0;
   return (
     <Panel title="New battle">
+      {contested.length > 0 && (
+        <label className="field" htmlFor={ids.wh}>Where
+          <select id={ids.wh} value={where} onChange={(e) => chooseWhere(e.target.value)}>
+            <option value="">Anywhere (choose armies below)</option>
+            {contested.map((hk) => <option key={hk} value={hk}>{hexName(k.map!, hk)}: {armiesAt(k, hk).length} armies</option>)}
+          </select>
+        </label>
+      )}
       <label className="field" htmlFor={ids.n}>Name<input id={ids.n} type="text" value={name} placeholder="Battle of the Narlmarch" onChange={(e) => setName(e.target.value)} /></label>
       <div className="grid-2" style={{ gap: 12 }}>
         {(['kingdom', 'enemy'] as const).map((side) => (
