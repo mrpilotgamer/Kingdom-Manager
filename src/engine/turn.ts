@@ -1,7 +1,8 @@
 // Kingdom turn resolution (Ultimate Campaign pg. 205-208).
 import eventsData from '../rules/events.json';
 import { ATTR_LABEL, ATTRS, type Attr } from '../rules/kingdom';
-import type { Kingdom, Phase } from '../state/types';
+import type { ActiveEvent, Kingdom, Phase } from '../state/types';
+import { uid } from '../state/util';
 import { changeUnrest, log } from './actions';
 import { defaultRng, die, type Rng } from './dice';
 import { computeStats } from './stats';
@@ -187,7 +188,67 @@ export function eventChance(k: Kingdom) {
   return k.eventLastTurn ? 25 : 75;
 }
 
+// ---------- ongoing events ----------
+export const isContinuous = (tags: string) => /continuous/i.test(tags);
+export const lastsUntilNextEvent = (text: string) => /until the next Event phase/i.test(text);
+
+/** Start tracking an event. Settlement events land on a random settlement unless a location is given. */
+export function trackEvent(
+  k: Kingdom,
+  e: { eventId?: string; name: string; tags: string; text: string },
+  lasts: ActiveEvent['lasts'],
+  location?: string,
+  rng: Rng = defaultRng,
+) {
+  k.events ??= [];
+  if (!location && /settlement/i.test(e.tags) && !/hex or settlement/i.test(e.tags) && k.settlements.length)
+    location = k.settlements[Math.floor(rng() * k.settlements.length)].name;
+  const ev: ActiveEvent = {
+    id: uid(), eventId: e.eventId, name: e.name, tags: e.tags, text: e.text, startedTurn: k.turn, lasts, location,
+    addressedTurn: k.turn, history: [{ turn: k.turn, text: lasts === 'resolved' ? 'Began.' : 'Began; lasts until the next Event phase.' }],
+  };
+  k.events.push(ev);
+  log(k, `${ev.name}${location ? ` (${location})` : ''} ${lasts === 'resolved' ? 'is ongoing until resolved' : 'lasts until the next Event phase'}.`);
+  return ev;
+}
+
+/** A kingdom check made for an ongoing event. Its effects are applied by hand; the result is recorded. */
+export function eventCheck(k: Kingdom, id: string, attr: Attr, roll: number, bonus = 0) {
+  const ev = k.events?.find((e) => e.id === id);
+  if (!ev) return null;
+  const c = kingdomCheck(k, attr, roll, bonus);
+  const text = `${ATTR_LABEL[attr]} check ${c.total} vs DC ${c.dc}: ${c.success ? 'success' : 'failure'}.`;
+  ev.history.push({ turn: k.turn, text });
+  ev.addressedTurn = k.turn;
+  log(k, `${ev.name}: ${text}`);
+  return c;
+}
+
+export function continueEvent(k: Kingdom, id: string) {
+  const ev = k.events?.find((e) => e.id === id);
+  if (!ev) return;
+  ev.addressedTurn = k.turn;
+  ev.history.push({ turn: k.turn, text: 'Continues.' });
+  log(k, `${ev.name}${ev.location ? ` (${ev.location})` : ''} continues.`);
+}
+
+export function resolveEvent(k: Kingdom, id: string) {
+  const ev = k.events?.find((e) => e.id === id);
+  if (!ev) return;
+  k.events = k.events!.filter((e) => e.id !== id);
+  log(k, `${ev.name}${ev.location ? ` (${ev.location})` : ''} resolved after ${k.turn - ev.startedTurn + 1} turn${k.turn === ev.startedTurn ? '' : 's'}.`);
+}
+
+/** Ongoing events still waiting to be dealt with this Event phase. */
+export const pendingEvents = (k: Kingdom) =>
+  (k.events ?? []).filter((e) => e.lasts === 'resolved' && e.startedTurn < k.turn && e.addressedTurn !== k.turn);
+
 export function rollEvents(k: Kingdom, rng: Rng = defaultRng) {
+  // Events that lasted "until the next Event phase" end now.
+  for (const e of (k.events ?? []).filter((x) => x.lasts === 'next-event' && x.startedTurn < k.turn)) {
+    log(k, `${e.name}${e.location ? ` (${e.location})` : ''} has ended.`);
+  }
+  k.events = (k.events ?? []).filter((x) => !(x.lasts === 'next-event' && x.startedTurn < k.turn));
   const chance = eventChance(k);
   const roll = die(100, rng);
   const occurs = roll <= chance;
@@ -199,6 +260,10 @@ export function rollEvents(k: Kingdom, rng: Rng = defaultRng) {
   done(k, 'event.roll', text);
   k.turnState.done['event.occurred'] = occurs ? 'yes' : '';
   k.turnState.done['event.list'] = JSON.stringify(events);
+  for (const e of events) {
+    if (isContinuous(e.tags)) trackEvent(k, { eventId: e.id, name: e.name, tags: e.tags, text: e.text }, 'resolved', undefined, rng);
+    else if (lastsUntilNextEvent(e.text)) trackEvent(k, { eventId: e.id, name: e.name, tags: e.tags, text: e.text }, 'next-event', undefined, rng);
+  }
   return { roll, chance, occurs, events };
 }
 

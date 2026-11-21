@@ -3,12 +3,13 @@ import { log, loseHex } from '../engine/actions';
 import { computeStats } from '../engine/stats';
 import {
   collectTaxes, deposit, endTurn, eventChance, modifyUnrest, payConsumption, PHASES, resolveStability, rollEvents,
-  royalEnforcer, withdraw, type RolledEvent,
+  pendingEvents, royalEnforcer, withdraw, type RolledEvent,
 } from '../engine/turn';
 import { ATTR_LABEL, ATTRS } from '../rules/kingdom';
 import { update } from '../state/store';
 import type { Kingdom, Phase } from '../state/types';
 import { CheckRow, Panel, useId } from './common';
+import { AddEventForm, OngoingEventCard, RolledEventCard } from './Events';
 import { Edicts } from './Overview';
 
 export type Tab = 'overview' | 'turn' | 'settlements' | 'territory' | 'leaders' | 'log' | 'settings';
@@ -51,7 +52,10 @@ export function Turn({ k, go }: { k: Kingdom; go: (t: Tab) => void }) {
           <span className="spacer" />
           {idx < 3
             ? <button className="btn primary" onClick={() => setPhase(PHASES[idx + 1].id)}>Continue to {PHASES[idx + 1].label}</button>
-            : <button className="btn primary" onClick={() => update('End turn', endTurn)}>End turn {k.turn}</button>}
+            : <>
+                {pendingEvents(k).length > 0 && <span className="small neg">{pendingEvents(k).length} ongoing event{pendingEvents(k).length > 1 ? 's' : ''} not dealt with yet</span>}
+                <button className="btn primary" onClick={() => update('End turn', endTurn)}>End turn {k.turn}</button>
+              </>}
         </div>
       </Panel>
     </>
@@ -197,33 +201,44 @@ function EventPhase({ k }: { k: Kingdom }) {
   const done = k.turnState.done['event.roll'];
   let events: RolledEvent[] = [];
   try { events = JSON.parse(k.turnState.done['event.list'] ?? '[]'); } catch { /* older save */ }
+  const ongoing = (k.events ?? []).filter((e) => e.startedTurn < k.turn);
+  const pending = pendingEvents(k);
+  const fresh = (k.events ?? []).filter((e) => e.startedTurn === k.turn && !events.some((r) => r.id === e.eventId));
   return (
     <div>
-      <Step n={1} title="Roll for an event" done={done}>
-        <p className="small">{eventChance(k)}% chance this turn{k.eventLastTurn ? '' : ' (75% because nothing happened last turn)'}. The GM may also run a campaign event instead.</p>
+      <Step n={1} title="Continue ongoing events" done={ongoing.length ? undefined : 'No ongoing events.'}>
+        {ongoing.length ? (
+          <>
+            <p className="small">
+              {pending.length
+                ? `${pending.length} continuous event${pending.length > 1 ? 's' : ''} still need${pending.length > 1 ? '' : 's'} dealing with this turn: attempt the check, or let it continue.`
+                : 'Every continuous event has been dealt with this turn.'}
+              {ongoing.some((e) => e.lasts === 'next-event') ? ' Events that last until the next Event phase end when you roll below.' : ''}
+            </p>
+            <div className="stack">
+              {ongoing.map((e) => <OngoingEventCard key={e.id} k={k} e={e} eventPhase />)}
+            </div>
+          </>
+        ) : null}
+      </Step>
+      <Step n={2} title="Roll for a new event" done={done}>
+        <p className="small">{eventChance(k)}% chance this turn, {k.eventLastTurn ? 'because an event happened last turn' : 'because nothing happened last turn'}. The GM may also run a campaign event instead.</p>
         <div><button className="btn primary" onClick={() => update('Roll event', (d) => { rollEvents(d); })}>Roll</button></div>
       </Step>
-      {done && (
+      {done && events.length > 0 && (
         <div className="stack">
-          {events.map((e, i) => (
-            <div key={i} className="event-card">
-              <div className="row">
-                <h3>{e.name}</h3>
-                {e.tags && <span className="chip">{e.tags}</span>}
-                <span className="spacer" />
-                <span className="small muted">{e.table}, d% {e.roll}</span>
-              </div>
-              <p className="small">{e.text}</p>
-            </div>
-          ))}
-          {events.length > 0 && (
-            <p className="callout info">
-              Resolve checks with the GM, then record results with Quick adjust on the Kingdom tab or as an ongoing modifier.
-              Once per Event phase you can hire adventurers for a bonus on one check: +2 for 4 BP, +5 for 8 BP, or +10 for 16 BP.
-            </p>
-          )}
+          {events.map((e, i) => <RolledEventCard key={i} k={k} e={e} />)}
+          <p className="callout info">
+            Resolve this turn's checks with the GM and record the results with Quick adjust on the Kingdom tab, or as an
+            ongoing modifier. Continuous events come back in this phase every turn until you mark them resolved.
+          </p>
         </div>
       )}
+      {fresh.length > 0 && <div className="stack">{fresh.map((e) => <OngoingEventCard key={e.id} k={k} e={e} eventPhase={false} />)}</div>}
+      <Step n={3} title="Campaign events (optional)">
+        <p className="small muted">Add your own event to track, such as a plot development from the adventure.</p>
+        <AddEventForm />
+      </Step>
     </div>
   );
 }

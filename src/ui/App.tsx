@@ -98,7 +98,7 @@ export function App() {
       </header>
       <main>
         <div className="wrap">
-          {tab === 'overview' && <Overview k={k} />}
+          {tab === 'overview' && <Overview k={k} openEvents={() => { update('Go to Event phase', (d) => { d.turnState.phase = 'event'; }); go('turn'); }} />}
           {tab === 'turn' && <Turn k={k} go={go} />}
           {tab === 'settlements' && <Settlements k={k} />}
           {tab === 'territory' && <Territory k={k} go={go} />}

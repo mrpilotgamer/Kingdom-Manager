@@ -7,6 +7,7 @@ import { update } from '../state/store';
 import type { Kingdom } from '../state/types';
 import { uid } from '../state/util';
 import { Panel, Signed, useId } from './common';
+import { OngoingSummary } from './Events';
 
 type Key = 'economy' | 'loyalty' | 'stability' | 'consumption';
 
@@ -30,7 +31,7 @@ export function Warnings({ k }: { k: Kingdom }) {
   );
 }
 
-export function Overview({ k }: { k: Kingdom }) {
+export function Overview({ k, openEvents }: { k: Kingdom; openEvents: () => void }) {
   const st = computeStats(k);
   const [open, setOpen] = useState<Key>('economy');
   const cards: { key: Key | null; label: string; value: string; sub: string }[] = [
@@ -48,6 +49,7 @@ export function Overview({ k }: { k: Kingdom }) {
   return (
     <>
       <Warnings k={k} />
+      <OngoingSummary k={k} onOpen={openEvents} />
       <div className="stats">
         {cards.map((c) => (
           <button key={c.label} className="stat" aria-pressed={c.key === open} disabled={!c.key}

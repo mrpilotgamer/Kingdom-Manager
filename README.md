@@ -22,7 +22,9 @@ does the math, and walks your group through each kingdom turn.
   Players' view until explored. Regenerate any time; claimed hexes are kept. Grow or shrink the map from any side, and
   new hexes continue the generated terrain.
 - **Turn wizard**: Upkeep → Edict → Income → Event. Type in your own d20 rolls or let the app roll. It tracks
-  per-turn limits (Table 4–4) and rolls on the event tables, showing the full event text.
+  per-turn limits (Table 4–4) and rolls on the event tables, showing the full event text. Continuous events stay on an
+  ongoing list and come back every Event phase until resolved; events that last "until the next Event phase" clear
+  themselves. You can add your own campaign events too.
 - **Chronicle and Undo**: every change is logged, and the last 40 changes can be undone.
 - **Saving**: everything is stored in your browser. Export or import a kingdom as JSON to back it up or move it.
 - **Setup mode**: enter a kingdom you're already running, without paying for or logging every past building.

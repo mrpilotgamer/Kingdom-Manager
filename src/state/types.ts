@@ -100,6 +100,25 @@ export interface LogEntry {
   unrest?: number;
 }
 
+/** An event that carries over between turns. */
+export interface ActiveEvent {
+  id: string;
+  /** Rulebook event id (see rules/events.json), if it came from the event tables. */
+  eventId?: string;
+  name: string;
+  /** e.g. "Settlement, Continuous" */
+  tags: string;
+  text: string;
+  startedTurn: number;
+  /** 'resolved': continues every Event phase until resolved. 'next-event': ends at the next Event phase. */
+  lasts: 'resolved' | 'next-event';
+  /** Settlement or hex it affects, if any. */
+  location?: string;
+  /** Turn it was last dealt with (checked, or let continue). */
+  addressedTurn?: number;
+  history: { turn: number; text: string }[];
+}
+
 export interface TurnState {
   phase: Phase;
   /** Steps already resolved this turn, by key (e.g. 'upkeep.stability'). */
@@ -127,6 +146,8 @@ export interface Kingdom {
   map?: HexMap;
   modifiers: Modifier[];
   log: LogEntry[];
+  /** Ongoing events (continuous, or lasting until the next Event phase). Missing on older saves. */
+  events?: ActiveEvent[];
   turnState: TurnState;
   eventLastTurn: boolean;
   settings: { districtsAddConsumption: boolean; diagonalAdjacency: boolean; setupMode: boolean };
